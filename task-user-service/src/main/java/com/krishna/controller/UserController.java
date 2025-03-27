@@ -4,10 +4,7 @@ import com.krishna.modal.User;
 import com.krishna.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,5 +23,21 @@ public class UserController {
     public ResponseEntity<List<User>> getAllUsers(){
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
+    }
+
+    // Update user profile
+    @PutMapping("/profile")
+    public ResponseEntity<User> updateUserProfile(
+            @RequestHeader("Authorization") String jwt,
+            @RequestBody User updatedUser) {
+        User user = userService.updateUserProfile(jwt, updatedUser);
+        return ResponseEntity.ok(user);
+    }
+
+    // Delete user profile
+    @DeleteMapping("/profile")
+    public ResponseEntity<String> deleteUserProfile(@RequestHeader("Authorization") String jwt) {
+        userService.deleteUserProfile(jwt);
+        return ResponseEntity.ok("User profile deleted successfully.");
     }
 }
