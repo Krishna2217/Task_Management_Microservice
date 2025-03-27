@@ -1,0 +1,19 @@
+package com.krishna.service;
+
+import com.krishna.config.JwtProvider;
+import com.krishna.modal.User;
+import com.krishna.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserServiceImplementation implements UserService{
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public User getUserProfile(String jwt) {
+        String email = JwtProvider.getEmailFromJwtToken(jwt);
+       return userRepository.findByEmail(email);
+    }
+}
