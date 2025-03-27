@@ -1,0 +1,60 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ configuration files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Generated files from javac
+*.class
+
+# Temporary files
+*.swp
+*.swo
+*.DS_Store
+
+# Eclipse/IDEA/NetBeans-specific files
+.metadata/
+.gradle/
+build/
+bin/
+nb-configuration.xml
+.vscode/
+*.iml
+.idea/
+*.ipr
+*.iws
+*.project
+*.pydevproject
+target/
+
+# Maven-specific
+.mvn/
+!.mvn/wrapper/mvn-wrapper.jar
+target/
+
+# Gradle-specific
+.gradle/
+build/
+
+# Jenv environment
+.jenv/
+
+# VS Code files
+.vscode/
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+
+# Intellij IDE specific
