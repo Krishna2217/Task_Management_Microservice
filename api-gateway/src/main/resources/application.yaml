@@ -4,15 +4,31 @@ server:
 spring:
   application:
     name: GATEWAY-SERVICE
+
   cloud:
     gateway:
       routes:
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/auth/**
+            - Path=/auth/**, /user/**, /api/user/**
+
+        - id: TASK-SERVICE
+          uri: lb://TASK-SERVICE
+          predicates:
+            - Path=/api/task/**, /tasks/**
+
+        - id: SUBMISSION-SERVICE
+          uri: lb://SUBMISSION-SERVICE
+          predicates:
+            - Path=/api/submission/**,  /submission/**
+
       default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+        - name: DedupeResponseHeader
+          args:
+            name: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+            strategy: RETAIN_FIRST # Use UPPERCASE here as required by Spring
+
       globalcors:
         cors-configuration:
           '[/**]':
