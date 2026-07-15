@@ -22,6 +22,8 @@ public class JwtProvider {
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime()+86400000))
                 .claim("email",auth.getName())
+                // jwtTokenValidator reads this claim to restore roles on subsequent requests; it was never set, so RBAC was silently broken
+                .claim("authorities", roles)
                 .signWith(key)
                 .compact();
         return jwt;
