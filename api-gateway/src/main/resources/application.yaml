@@ -32,7 +32,8 @@ spring:
       globalcors:
         cors-configuration:
           '[/**]':
-            allowedOrigins: "*"
+            # allowedOrigins("*") is rejected by browsers once credentials are involved; allowedOriginPatterns is the CORS-spec-compliant equivalent
+            allowedOriginPatterns: "*"
             allowedMethods: "*"
             allowedHeaders: "*"
 

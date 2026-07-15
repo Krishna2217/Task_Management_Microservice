@@ -43,7 +43,8 @@ public class ApplicationConfiguration {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
-                cfg.setAllowedOrigins(Collections.singletonList("*"));
+                // allowedOrigins("*") combined with allowCredentials(true) is rejected by browsers per the CORS spec; patterns are allowed
+                cfg.setAllowedOriginPatterns(Collections.singletonList("*"));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
                 cfg.setAllowedHeaders(Collections.singletonList("*"));
                 cfg.setAllowCredentials(true);
