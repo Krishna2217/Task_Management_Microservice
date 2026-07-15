@@ -39,8 +39,10 @@ nb-configuration.xml
 target/
 
 # Maven-specific
-.mvn/
-!.mvn/wrapper/mvn-wrapper.jar
+.mvn/*
+!.mvn/wrapper
+.mvn/wrapper/*
+!.mvn/wrapper/maven-wrapper.properties
 target/
 
 # Gradle-specific
