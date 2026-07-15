@@ -1,6 +1,7 @@
 package com.krishna.controller;
 
 import com.krishna.modal.User;
+import com.krishna.response.UserResponse;
 import com.krishna.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,24 +15,24 @@ public class UserController {
     @Autowired
     private UserService userService;
     @GetMapping("/profile")
-    public ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String jwt){
+    public ResponseEntity<UserResponse> getUserProfile(@RequestHeader("Authorization") String jwt){
         User user = userService.getUserProfile(jwt);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @GetMapping()
-    public ResponseEntity<List<User>> getAllUsers(){
+    public ResponseEntity<List<UserResponse>> getAllUsers(){
         List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(users.stream().map(UserResponse::from).toList());
     }
 
     // Update user profile
     @PutMapping("/profile")
-    public ResponseEntity<User> updateUserProfile(
+    public ResponseEntity<UserResponse> updateUserProfile(
             @RequestHeader("Authorization") String jwt,
             @RequestBody User updatedUser) {
         User user = userService.updateUserProfile(jwt, updatedUser);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     // Delete user profile
