@@ -60,3 +60,6 @@ Thumbs.db
 .DS_Store
 
 # Intellij IDE specific
+
+# Claude Code project instructions (kept local only)
+CLAUDE.md
