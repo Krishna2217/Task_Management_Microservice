@@ -16,9 +16,11 @@ public class UserServiceImplementation implements UserService{
     private UserRepository userRepository;
     @Autowired
     private  PasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtProvider jwtProvider;
     @Override
     public User getUserProfile(String jwt) {
-        String email = JwtProvider.getEmailFromJwtToken(jwt);
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
        return userRepository.findByEmail(email);
     }
 
@@ -29,7 +31,7 @@ public class UserServiceImplementation implements UserService{
 
     @Override
     public User updateUserProfile(String jwt, User updatedUser) {
-        String email = JwtProvider.getEmailFromJwtToken(jwt);
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
         User user = userRepository.findByEmail(email);
         if (user==null){
             throw new UsernameNotFoundException("User not found with email"+ email);
@@ -42,7 +44,7 @@ public class UserServiceImplementation implements UserService{
 
     @Override
     public void deleteUserProfile(String jwt) {
-        String email = JwtProvider.getEmailFromJwtToken(jwt);
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
         User user = userRepository.findByEmail(email);
         if (user==null){
             throw new UsernameNotFoundException("User not found with email"+ email);

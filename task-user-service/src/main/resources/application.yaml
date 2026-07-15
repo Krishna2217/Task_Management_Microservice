@@ -28,3 +28,8 @@ eureka:
     fetch-registry: true
     serviceUrl:
       defaultZone: http://localhost:8070/eureka/
+
+app:
+  jwt:
+    # overridable via JWT_SECRET env var; the placeholder default is local-dev-only, never use it in a real deployment
+    secret: ${JWT_SECRET:changeme-local-only-32-bytes-minimum-length-here}

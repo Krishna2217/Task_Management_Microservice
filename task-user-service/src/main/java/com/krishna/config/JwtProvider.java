@@ -4,8 +4,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Collection;
@@ -13,9 +15,17 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+// instance-based (was static) so the signing key can come from injected JwtProperties instead of a hardcoded constant
+@Component
 public class JwtProvider {
-    static SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
-    public static String generateToken(Authentication auth){
+    @Autowired
+    private JwtProperties jwtProperties;
+
+    private SecretKey key() {
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
+    }
+
+    public String generateToken(Authentication auth){
         Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
         String roles = populateAuthoritites(authorities);
         String jwt = Jwts.builder()
@@ -24,13 +34,13 @@ public class JwtProvider {
                 .claim("email",auth.getName())
                 // jwtTokenValidator reads this claim to restore roles on subsequent requests; it was never set, so RBAC was silently broken
                 .claim("authorities", roles)
-                .signWith(key)
+                .signWith(key())
                 .compact();
         return jwt;
     }
-    public static String getEmailFromJwtToken(String jwt){
+    public String getEmailFromJwtToken(String jwt){
         jwt = jwt.substring(7);
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
+        Claims claims = Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(jwt).getBody();
         String email = String.valueOf(claims.get("email"));
         return email;
     }

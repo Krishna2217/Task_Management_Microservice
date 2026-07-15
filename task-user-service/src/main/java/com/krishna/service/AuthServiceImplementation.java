@@ -27,6 +27,9 @@ public class AuthServiceImplementation implements AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtProvider jwtProvider;
+
     // Register a new user
     @Override
     public AuthResponse registerUser(User user) throws UserAlreadyExistsException {
@@ -48,7 +51,7 @@ public class AuthServiceImplementation implements AuthService {
         Authentication authentication = new UsernamePasswordAuthenticationToken(email, user.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String token = JwtProvider.generateToken(authentication);
+        String token = jwtProvider.generateToken(authentication);
 
         // Return a response
         AuthResponse response = new AuthResponse();
@@ -69,7 +72,7 @@ public class AuthServiceImplementation implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Generate a JWT token
-        String token = JwtProvider.generateToken(authentication);
+        String token = jwtProvider.generateToken(authentication);
 
         // Return a response
         AuthResponse response = new AuthResponse();

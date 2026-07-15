@@ -1,6 +1,7 @@
 package com.krishna.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -18,6 +19,9 @@ import java.util.Collections;
 
 @Configuration
 public class ApplicationConfiguration {
+    @Autowired
+    private jwtTokenValidator jwtTokenValidator;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.sessionManagement(
@@ -29,7 +33,7 @@ public class ApplicationConfiguration {
                         .authenticated()
                         .anyRequest()
                         .permitAll()
-        ).addFilterBefore(new jwtTokenValidator(), BasicAuthenticationFilter.class)
+        ).addFilterBefore(jwtTokenValidator, BasicAuthenticationFilter.class)
                 .csrf(csrf->csrf.disable())
                 .cors(cors->cors.configurationSource(corsConfigurationSource()))
                 .httpBasic(Customizer.withDefaults())
