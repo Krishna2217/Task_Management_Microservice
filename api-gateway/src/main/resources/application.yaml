@@ -13,7 +13,8 @@ spring:
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/auth/**, /user/**, /api/user/**
+            # UserController is mapped at "api/users" (plural); "/api/user/**" never matched it
+            - Path=/auth/**, /user/**, /api/users/**
 
         - id: TASK-SERVICE
           uri: lb://TASK-SERVICE

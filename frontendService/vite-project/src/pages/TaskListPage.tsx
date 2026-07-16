@@ -1,45 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
 
-// Mock data for our tasks
-const mockTaskData: TaskCardProps[] = [
-  {
-    id: "react-101",
-    imageUrl: "https://cdn4.iconfinder.com/data/icons/logos-3/600/React.js_logo-512.png",
-    title: "Study a React Program",
-    description: "Deep dive into the fundamentals of React to build modern, interactive user interfaces.",
-    learningItems: ["State & Lifecycle", "Hooks (useState, useEffect)", "Conditional Rendering"],
-    status: "in-progress",
-  },
-  {
-    id: "tailwind-css-mastery",
-    imageUrl: "https://cdn.icon-icons.com/icons2/2699/PNG/512/tailwindcss_logo_icon_167923.png",
-    title: "Master Tailwind CSS",
-    description: "Learn how to rapidly build modern websites without ever leaving your HTML.",
-    learningItems: ["Utility-First Fundamentals", "Responsive Design", "Dark Mode", "Customizing the Theme"],
-    status: "not-started",
-  },
-  {
-    id: "nodejs-backend",
-    imageUrl: "https://cdn.icon-icons.com/icons2/2415/PNG/512/nodejs_plain_logo_icon_146409.png",
-    title: "Build a Node.js Backend",
-    description: "Create a robust and scalable backend server using Node.js and Express.",
-    learningItems: ["Express Server Setup", "REST API Principles", "Middleware", "Connecting to a Database"],
-    status: "completed",
-  },
-];
+const DEFAULT_TASK_IMAGE = "https://cdn-icons-png.flaticon.com/512/1147/1147805.png";
+
+// backend TaskStatus enum -> TaskCard's display status
+const statusMap: Record<string, string> = {
+  PENDING: "not-started",
+  ASSIGNED: "in-progress",
+  DONE: "completed",
+};
+
+interface BackendTask {
+  id: number;
+  title: string;
+  description: string;
+  image: string | null;
+  tags: string[];
+  status: string;
+}
 
 const TaskListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  // Simulate API call to fetch tasks
   useEffect(() => {
     const fetchTasks = async () => {
-      // Simulate a delay for API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setTasks(mockTaskData); // Set the mock data as the fetched tasks
+      try {
+        const res = await axiosInstance.get<BackendTask[]>("/api/task/user");
+        setTasks(
+          res.data.map((task) => ({
+            id: String(task.id),
+            imageUrl: task.image || DEFAULT_TASK_IMAGE,
+            title: task.title,
+            description: task.description,
+            learningItems: task.tags ?? [],
+            status: statusMap[task.status] ?? "not-started",
+          }))
+        );
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchTasks();
@@ -62,15 +65,17 @@ const TaskListPage: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl md:text-4xl font-extrabold text-white dark:text-purple-200 drop-shadow-lg">
-          All Tasks
+          Your Tasks
         </h1>
         <p className="mt-1 text-lg text-purple-200 dark:text-purple-300">
-          Here is a list of all available tasks.
+          Here is a list of tasks assigned to you.
         </p>
       </motion.div>
 
-      {tasks.length === 0 ? (
+      {loading ? (
         <p className="text-purple-300">Loading tasks...</p>
+      ) : tasks.length === 0 ? (
+        <p className="text-purple-300">No tasks assigned to you yet.</p>
       ) : (
         <motion.div
           className="space-y-6"

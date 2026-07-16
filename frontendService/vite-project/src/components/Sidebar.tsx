@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { FaHome, FaCheckCircle, FaUserCheck, FaQuestionCircle, FaPlus, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
+import axiosInstance from '../utils/axiosInstance';
 
-// Mock user data (in a real app, this would come from a context or API)
-const user = {
-  name: 'Alex Doe',
-  avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-};
+interface UserProfile {
+  fullName: string;
+  email: string;
+}
 
 // Props interface to control the sidebar's visibility on mobile
 interface SidebarProps {
@@ -16,6 +16,22 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axiosInstance.get<UserProfile>("/api/users/profile");
+        setUser(res.data);
+      } catch {
+        // profile fetch failed (e.g. expired token); leave user null and show fallbacks
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // avatar isn't part of the backend profile yet, so derive a stable one from the user's email
+  const avatarUrl = `https://i.pravatar.cc/150?u=${encodeURIComponent(user?.email ?? "guest")}`;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -42,11 +58,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           {/* Gradient border effect for the avatar */}
           <div className="w-28 h-28 rounded-full bg-gradient-to-r from-purple-400 to-green-400 p-1 shadow-lg">
             <div className="bg-purple-800 rounded-full p-1">
-              <img src={user.avatarUrl} alt="User Avatar" className="w-full h-full rounded-full" />
+              <img src={avatarUrl} alt="User Avatar" className="w-full h-full rounded-full" />
             </div>
           </div>
         </div>
-        <h3 className="mt-4 text-lg font-bold text-white">{user.name}</h3>
+        <h3 className="mt-4 text-lg font-bold text-white">{user?.fullName ?? "..."}</h3>
       </div>
 
       {/* Middle Section: Navigation Links (scrollable if content overflows) */}
