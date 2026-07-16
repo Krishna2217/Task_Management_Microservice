@@ -3,34 +3,45 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { isAxiosError } from 'axios';
 import { FaCamera } from 'react-icons/fa';
+import axiosInstance from '../utils/axiosInstance';
 
-// --- Mock User Data (In a real app, you'd fetch this via an API) ---
-const currentUser = {
-  name: 'Alex Doe',
-  email: 'alex.doe@example.com',
-  avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-};
+interface UserProfile {
+  fullName: string;
+  email: string;
+  role: string;
+}
 
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate();
 
-  // State for form fields, pre-populated from useEffect
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [avatar] = useState(currentUser.avatarUrl);
+  const [role, setRole] = useState('');
+  // updateUserProfile re-encodes and overwrites the password on every save, so it must always be supplied
+  const [password, setPassword] = useState('');
 
-  // State for handling form submission
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Pre-fill the form with the user's current data on component mount
   useEffect(() => {
-    // In a real app, you would fetch the user's data from your API here
-    setName(currentUser.name);
-    setEmail(currentUser.email);
+    const fetchProfile = async () => {
+      try {
+        const res = await axiosInstance.get<UserProfile>("/api/users/profile");
+        setName(res.data.fullName);
+        setEmail(res.data.email);
+        setRole(res.data.role);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchProfile();
   }, []);
+
+  const avatarUrl = `https://i.pravatar.cc/150?u=${encodeURIComponent(email || "guest")}`;
 
   const handleAvatarChange = () => {
     // This is a placeholder for file upload logic
@@ -44,28 +55,35 @@ const EditProfilePage: React.FC = () => {
     setMessage('');
     setError('');
 
-    // --- Simulate API Call ---
     try {
-      // Fake a 1.5 second network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await axiosInstance.put("/api/users/profile", {
+        fullName: name,
+        email,
+        role,
+        password,
+      });
 
-      // Here you would send the updated data (name, email, avatar) to your API
-      // For example: await axios.put('/api/user/profile', { name, email });
-
-      console.log('Updated Profile Data:', { name, email });
       setMessage('Profile updated successfully!');
-
-      // Redirect back to the profile page after a short delay
       setTimeout(() => {
         navigate('/dashboard/profile');
-      }, 2000);
-
+      }, 1500);
     } catch (err) {
-      setError('Failed to update profile. Please try again.');
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
+      } else {
+        setError('Failed to update profile. Please try again.');
+      }
       setLoading(false);
     }
-    // Don't set loading to false on success because we are navigating away
   };
+
+  if (fetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-purple-300">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-purple-800 dark:from-purple-900 dark:to-gray-900 text-white pt-24 sm:pt-32 pb-16 sm:pb-24">
@@ -91,7 +109,7 @@ const EditProfilePage: React.FC = () => {
             <div className="flex flex-col items-center mb-8">
               <div className="relative">
                 <img
-                  src={avatar}
+                  src={avatarUrl}
                   alt="User Avatar"
                   className="w-32 h-32 rounded-full border-4 border-purple-400 shadow-lg"
                 />
@@ -129,10 +147,27 @@ const EditProfilePage: React.FC = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  disabled
+                  className="w-full px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white/60 cursor-not-allowed"
+                />
+                <p className="mt-1 text-xs text-purple-300/70">Email cannot be changed.</p>
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-purple-200 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  placeholder="Re-enter your password to confirm changes"
                   required
                 />
+                <p className="mt-1 text-xs text-purple-300/70">
+                  Required to save changes. Enter a new password here to change it.
+                </p>
               </div>
             </div>
 

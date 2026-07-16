@@ -1,19 +1,37 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 import axiosInstance from "../utils/axiosInstance";
-import { PREDEFINED_LEARNING_ITEMS as predefinedLearningItems } from "../utils/taskMapper";
+import { PREDEFINED_LEARNING_ITEMS } from "../utils/taskMapper";
+import type { BackendTask } from "../utils/taskMapper";
 
-const CreateTaskPage: React.FC = () => {
+const EditTaskPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedLearningItems, setSelectedLearningItems] = useState<string[]>([]);
+  const [fetching, setFetching] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  // Function to handle adding/removing learning items
+  useEffect(() => {
+    const fetchTask = async () => {
+      try {
+        const res = await axiosInstance.get<BackendTask>(`/api/task/${id}`);
+        setTitle(res.data.title);
+        setDescription(res.data.description);
+        setImageUrl(res.data.image ?? "");
+        setSelectedLearningItems(res.data.tags ?? []);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchTask();
+  }, [id]);
+
   const handleLearningItemChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     if (!selectedLearningItems.includes(value)) {
@@ -21,18 +39,16 @@ const CreateTaskPage: React.FC = () => {
     }
   };
 
-  // Function to remove a learning item
   const handleRemoveLearningItem = (item: string) => {
     setSelectedLearningItems((prev) => prev.filter((i) => i !== item));
   };
 
-  // Function to handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      await axiosInstance.post("/api/task", {
+      await axiosInstance.put(`/api/task/${id}`, {
         title,
         description,
         image: imageUrl,
@@ -40,20 +56,19 @@ const CreateTaskPage: React.FC = () => {
       });
       navigate("/dashboard");
     } catch (err) {
-      if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create task. Only admins can create tasks.");
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
+      setError(isAxiosError(err) ? err.response?.data?.message || "Failed to update task." : "Failed to update task.");
       setSubmitting(false);
     }
   };
 
+  if (fetching) {
+    return <p className="text-purple-300 text-center mt-10">Loading task...</p>;
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-black/20 dark:bg-gray-900/40 shadow-lg rounded-lg">
-      <h1 className="text-3xl font-bold text-white mb-6">Create New Task</h1>
+      <h1 className="text-3xl font-bold text-white mb-6">Edit Task</h1>
       <form onSubmit={handleSubmit}>
-        {/* Title Input */}
         <div className="mb-4">
           <label htmlFor="title" className="block text-sm font-medium text-purple-200">
             Task Title
@@ -64,12 +79,10 @@ const CreateTaskPage: React.FC = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-purple-500 rounded-md shadow-sm bg-black/30 text-white focus:ring-purple-500 focus:border-purple-500"
-            placeholder="Enter task title"
             required
           />
         </div>
 
-        {/* Description Input */}
         <div className="mb-4">
           <label htmlFor="description" className="block text-sm font-medium text-purple-200">
             Task Description
@@ -79,13 +92,11 @@ const CreateTaskPage: React.FC = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-purple-500 rounded-md shadow-sm bg-black/30 text-white focus:ring-purple-500 focus:border-purple-500"
-            placeholder="Enter task description"
             rows={4}
             required
           ></textarea>
         </div>
 
-        {/* Image URL Input */}
         <div className="mb-4">
           <label htmlFor="imageUrl" className="block text-sm font-medium text-purple-200">
             Image URL
@@ -96,32 +107,29 @@ const CreateTaskPage: React.FC = () => {
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-purple-500 rounded-md shadow-sm bg-black/30 text-white focus:ring-purple-500 focus:border-purple-500"
-            placeholder="Enter image URL"
-            required
           />
         </div>
 
-        {/* Learning Items Dropdown */}
-        <div className="mb-4" >
+        <div className="mb-4">
           <label htmlFor="learningItems" className="block text-sm font-medium text-purple-200">
             Learning Items
           </label>
           <select
             id="learningItems"
             onChange={handleLearningItemChange}
+            defaultValue=""
             className="mt-1 block w-full px-3 py-2 bg-purple-700 border border-purple-500 rounded-md shadow-sm text-white focus:ring-purple-500 focus:border-purple-500"
           >
-            <option value="" disabled selected>
+            <option value="" disabled>
               Select learning items
             </option>
-            {predefinedLearningItems.map((item) => (
+            {PREDEFINED_LEARNING_ITEMS.map((item) => (
               <option key={item} value={item} className="bg-black/20 dark:bg-gray-900/40 text-white">
                 {item}
               </option>
             ))}
           </select>
 
-          {/* Display Selected Learning Items */}
           <div className="mt-2">
             {selectedLearningItems.map((item) => (
               <span
@@ -143,14 +151,13 @@ const CreateTaskPage: React.FC = () => {
 
         {error && <p className="text-red-400 mb-4">{error}</p>}
 
-        {/* Submit Button */}
         <div className="mt-6">
           <button
             type="submit"
             disabled={submitting}
             className="w-full px-4 py-2 bg-purple-500 text-white font-semibold rounded-md shadow hover:bg-purple-600 focus:ring-2 focus:ring-purple-500 disabled:bg-purple-400/50 disabled:cursor-not-allowed"
           >
-            {submitting ? "Creating..." : "Create Task"}
+            {submitting ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>
@@ -158,4 +165,4 @@ const CreateTaskPage: React.FC = () => {
   );
 };
 
-export default CreateTaskPage;
+export default EditTaskPage;

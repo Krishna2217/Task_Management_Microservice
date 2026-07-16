@@ -21,6 +21,9 @@ import CreateTaskPage from "./pages/CreateTaskPage";
 import DonePage from "./pages/DonePage";
 import AssignedPage from "./pages/Assigned";
 import NotAssignedPage from "./pages/NotAssigned";
+import AssignTaskPage from "./pages/AssignTaskPage";
+import TaskSubmissionsPage from "./pages/TaskSubmissionsPage";
+import EditTaskPage from "./pages/EditTaskPage";
 
 const PublicLayout = () => (
   <div className="flex flex-col min-h-screen">
@@ -66,6 +69,9 @@ const App: React.FC = () => {
             <Route path="tasks/assigned" element={<AssignedPage />} />
             <Route path="tasks/unassigned" element={<NotAssignedPage />} />
             <Route path="tasks/new" element={<CreateTaskPage/>} />
+            <Route path="tasks/:id/assigned" element={<AssignTaskPage />} />
+            <Route path="tasks/:id/submissions" element={<TaskSubmissionsPage />} />
+            <Route path="tasks/:id/edit" element={<EditTaskPage />} />
             <Route path="tasks/:id" element={<FeatureUnderDevelopmentPage featureName="Task Details" />} />
           </Route>
         </Routes>

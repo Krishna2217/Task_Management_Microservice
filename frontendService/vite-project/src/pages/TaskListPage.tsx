@@ -2,24 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
-
-const DEFAULT_TASK_IMAGE = "https://cdn-icons-png.flaticon.com/512/1147/1147805.png";
-
-// backend TaskStatus enum -> TaskCard's display status
-const statusMap: Record<string, string> = {
-  PENDING: "not-started",
-  ASSIGNED: "in-progress",
-  DONE: "completed",
-};
-
-interface BackendTask {
-  id: number;
-  title: string;
-  description: string;
-  image: string | null;
-  tags: string[];
-  status: string;
-}
+import { mapBackendTask, type BackendTask } from "../utils/taskMapper";
 
 const TaskListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
@@ -30,16 +13,7 @@ const TaskListPage: React.FC = () => {
     const fetchTasks = async () => {
       try {
         const res = await axiosInstance.get<BackendTask[]>("/api/task/user");
-        setTasks(
-          res.data.map((task) => ({
-            id: String(task.id),
-            imageUrl: task.image || DEFAULT_TASK_IMAGE,
-            title: task.title,
-            description: task.description,
-            learningItems: task.tags ?? [],
-            status: statusMap[task.status] ?? "not-started",
-          }))
-        );
+        setTasks(res.data.map(mapBackendTask));
       } finally {
         setLoading(false);
       }
@@ -47,6 +21,11 @@ const TaskListPage: React.FC = () => {
 
     fetchTasks();
   }, []);
+
+  const handleDelete = async (id: string) => {
+    await axiosInstance.delete(`/api/task/${id}`);
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  };
 
   const handleMenuToggle = (id: string) => {
     setOpenMenuId((prevId) => (prevId === id ? null : id)); // Toggle menu
@@ -95,6 +74,7 @@ const TaskListPage: React.FC = () => {
               isMenuOpen={openMenuId === task.id} // Pass the open state for this card
               onMenuToggle={handleMenuToggle} // Pass the toggle function
               onMenuClose={handleMenuClose} // Pass the close function
+              onDelete={handleDelete}
             />
           ))}
         </motion.div>

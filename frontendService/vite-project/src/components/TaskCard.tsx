@@ -14,6 +14,7 @@ export interface TaskCardProps {
   isMenuOpen?: boolean; // Prop to control menu visibility
   onMenuToggle?: (id: string) => void; // Prop to handle menu toggle
   onMenuClose?: () => void; // Prop to close the menu when clicking outside
+  onDelete?: (id: string) => void; // Prop to handle deleting this task
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -25,6 +26,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   isMenuOpen,
   onMenuToggle,
   onMenuClose,
+  onDelete,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +87,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </Link>
               </li>
               <li>
-                <button className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-red-500/50">
+                <button
+                  onClick={() => onDelete?.(id)}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-red-500/50"
+                >
                   <FaTrash /> Delete
                 </button>
               </li>

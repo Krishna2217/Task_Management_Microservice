@@ -1,40 +1,52 @@
 // src/pages/UserProfilePage.tsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaEdit, FaKey, FaBell, FaFileExport, FaTrash } from "react-icons/fa";
+import axiosInstance from "../utils/axiosInstance";
+import type { BackendTask } from "../utils/taskMapper";
 
-// --- Mock User Data ---
-const mockUserProfile = {
-  name: "Alex Doe",
-  email: "alex.doe@example.com",
-  memberSince: "2024-01-15",
-  avatarUrl: "https://i.pravatar.cc/150?u=a042581f4e29026704d", // A random placeholder avatar
-};
+interface UserProfile {
+  fullName: string;
+  email: string;
+  role: string;
+}
 
-const mockUserStats = [
-  { label: "Tasks Completed", value: 42 },
-  { label: "Tasks In Progress", value: 8 },
-  { label: "Teams", value: 3 },
-];
+interface UserStat {
+  label: string;
+  value: number;
+}
 
 const UserProfilePage: React.FC = () => {
-  const [userProfile, setUserProfile] = useState<typeof mockUserProfile | null>(null);
-  const [userStats, setUserStats] = useState<typeof mockUserStats | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userStats, setUserStats] = useState<UserStat[] | null>(null);
+  const navigate = useNavigate();
 
-  // Simulate API call to fetch user data and stats
   useEffect(() => {
     const fetchUserData = async () => {
-      // Simulate a delay for API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Set user profile and stats
-      setUserProfile(mockUserProfile);
-      setUserStats(mockUserStats);
+      const [profileRes, tasksRes] = await Promise.all([
+        axiosInstance.get<UserProfile>("/api/users/profile"),
+        axiosInstance.get<BackendTask[]>("/api/task/user"),
+      ]);
+      setUserProfile(profileRes.data);
+      const completed = tasksRes.data.filter((t) => t.status === "DONE").length;
+      setUserStats([
+        { label: "Tasks Completed", value: completed },
+        { label: "Tasks In Progress", value: tasksRes.data.length - completed },
+      ]);
     };
 
     fetchUserData();
   }, []);
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("This will permanently delete your account. Continue?")) return;
+    await axiosInstance.delete("/api/users/profile");
+    localStorage.removeItem("token");
+    navigate("/login", { replace: true });
+  };
+
+  const avatarUrl = `https://i.pravatar.cc/150?u=${encodeURIComponent(userProfile?.email ?? "guest")}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-purple-800 dark:from-purple-900 dark:to-gray-900 text-white pt-24 sm:pt-32 pb-16 sm:pb-24">
@@ -59,15 +71,13 @@ const UserProfilePage: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <img
-                src={userProfile.avatarUrl}
+                src={avatarUrl}
                 alt="User Avatar"
                 className="w-32 h-32 rounded-full border-4 border-purple-400 shadow-lg"
               />
-              <h2 className="mt-4 text-2xl font-bold text-white">{userProfile.name}</h2>
+              <h2 className="mt-4 text-2xl font-bold text-white">{userProfile.fullName}</h2>
               <p className="text-purple-300">{userProfile.email}</p>
-              <p className="mt-2 text-sm text-purple-400">
-                Member since {new Date(userProfile.memberSince).toLocaleDateString()}
-              </p>
+              <p className="mt-2 text-sm text-purple-400">{userProfile.role}</p>
               <Link
                 to="/dashboard/profile/edit"
                 className="mt-6 flex items-center gap-2 px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-colors"
@@ -86,7 +96,7 @@ const UserProfilePage: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
                 <h3 className="text-xl font-bold text-white mb-4">Your Activity</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {userStats.map((stat) => (
                     <div
                       key={stat.label}
@@ -134,7 +144,10 @@ const UserProfilePage: React.FC = () => {
                 <p className="text-red-300/80 text-sm mb-4">
                   These actions are permanent and cannot be undone.
                 </p>
-                <button className="w-full sm:w-auto px-4 py-2 bg-red-600/80 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="w-full sm:w-auto px-4 py-2 bg-red-600/80 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                >
                   <FaTrash className="inline mr-2" />
                   Delete My Account
                 </button>
