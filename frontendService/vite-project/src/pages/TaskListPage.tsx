@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
-import { mapBackendTask, type BackendTask } from "../utils/taskMapper";
+import { mapBackendTask, fetchUserNamesById, type BackendTask } from "../utils/taskMapper";
 
 const TaskListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
@@ -12,8 +12,11 @@ const TaskListPage: React.FC = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await axiosInstance.get<BackendTask[]>("/api/task/user");
-        setTasks(res.data.map(mapBackendTask));
+        const [res, userNamesById] = await Promise.all([
+          axiosInstance.get<BackendTask[]>("/api/task/user"),
+          fetchUserNamesById(),
+        ]);
+        setTasks(res.data.map((task) => mapBackendTask(task, userNamesById)));
       } finally {
         setLoading(false);
       }
@@ -71,6 +74,7 @@ const TaskListPage: React.FC = () => {
               description={task.description}
               learningItems={task.learningItems}
               status={task.status}
+              assignedUserName={task.assignedUserName}
               isMenuOpen={openMenuId === task.id} // Pass the open state for this card
               onMenuToggle={handleMenuToggle} // Pass the toggle function
               onMenuClose={handleMenuClose} // Pass the close function

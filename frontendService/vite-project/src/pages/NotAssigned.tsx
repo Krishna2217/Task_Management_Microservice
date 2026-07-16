@@ -16,7 +16,7 @@ const NotAssignedPage: React.FC = () => {
         const res = await axiosInstance.get<BackendTask[]>("/api/task", {
           params: { status: "PENDING" },
         });
-        setTasks(res.data.map(mapBackendTask));
+        setTasks(res.data.map((task) => mapBackendTask(task)));
       } finally {
         setLoading(false);
       }

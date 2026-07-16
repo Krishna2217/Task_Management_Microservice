@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
-import { mapBackendTask, type BackendTask } from "../utils/taskMapper";
+import { mapBackendTask, fetchUserNamesById, type BackendTask } from "../utils/taskMapper";
 
 const AssignedPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
@@ -13,8 +13,11 @@ const AssignedPage: React.FC = () => {
     const fetchTasks = async () => {
       try {
         // tasks currently assigned to me
-        const res = await axiosInstance.get<BackendTask[]>("/api/task/user");
-        setTasks(res.data.map(mapBackendTask));
+        const [res, userNamesById] = await Promise.all([
+          axiosInstance.get<BackendTask[]>("/api/task/user"),
+          fetchUserNamesById(),
+        ]);
+        setTasks(res.data.map((task) => mapBackendTask(task, userNamesById)));
       } finally {
         setLoading(false);
       }
@@ -59,6 +62,7 @@ const AssignedPage: React.FC = () => {
               status={task.status}
               description={task.description}
               learningItems={task.learningItems}
+              assignedUserName={task.assignedUserName}
               isMenuOpen={openMenuId === task.id}
               onMenuToggle={handleMenuToggle}
               onMenuClose={handleMenuClose}

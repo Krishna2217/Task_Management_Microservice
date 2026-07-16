@@ -11,6 +11,7 @@ export interface TaskCardProps {
   description: string;
   learningItems: string[];
   status: string;
+  assignedUserName?: string; // Name of the user this task is assigned to, if any
   isMenuOpen?: boolean; // Prop to control menu visibility
   onMenuToggle?: (id: string) => void; // Prop to handle menu toggle
   onMenuClose?: () => void; // Prop to close the menu when clicking outside
@@ -23,6 +24,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   title,
   description,
   learningItems,
+  assignedUserName,
   isMenuOpen,
   onMenuToggle,
   onMenuClose,
@@ -113,6 +115,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <div className="flex-grow">
           <h3 className="text-xl font-bold text-white pr-8">{title}</h3>
           <p className="mt-1 text-sm text-purple-300">{description}</p>
+          <p className="mt-2 text-sm text-purple-200">
+            Assigned to: <span className="font-semibold">{assignedUserName ?? "Unassigned"}</span>
+          </p>
 
           <div className="mt-4">
             <h4 className="text-sm font-semibold text-purple-200 mb-2">Things to Learn:</h4>
