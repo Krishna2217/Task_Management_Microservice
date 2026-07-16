@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { FaHome, FaCheckCircle, FaUserCheck, FaQuestionCircle, FaPlus, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
+import { FaHome, FaCheckCircle, FaUserCheck, FaQuestionCircle, FaPlus, FaSignOutAlt, FaUserCircle, FaClipboardList } from 'react-icons/fa';
 import axiosInstance from '../utils/axiosInstance';
 
 interface UserProfile {
   fullName: string;
   email: string;
+  role: string;
 }
 
 // Props interface to control the sidebar's visibility on mobile
@@ -91,6 +92,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <FaUserCircle className="w-5 h-5" />
           <span>Profile</span>
         </NavLink>
+        {user?.role === "ROLE_ADMIN" && (
+          <NavLink to="/dashboard/admin/tasks" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>
+            <FaClipboardList className="w-5 h-5" />
+            <span>Admin Overview</span>
+          </NavLink>
+        )}
       </nav>
 
       {/* Bottom Section: Action Buttons (does not scroll) */}
