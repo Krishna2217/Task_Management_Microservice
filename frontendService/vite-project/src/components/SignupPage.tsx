@@ -3,20 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 import axiosInstance from "../utils/axiosInstance";
 
-const roles = [
-  { value: "ROLE_ADMIN", label: "Admin" },
-  { value: "ROLE_USER", label: "User" },
-  { value: "ROLE_TEACHER", label: "Teacher" },
-  { value: "ROLE_STUDENT", label: "Student" },
-  { value: "ROLE_PROJECT_HEAD", label: "Project Head" },
-  { value: "ROLE_DEVELOPER", label: "Developer" },
-];
-
 const SignupPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState(roles[0].value);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -25,10 +15,10 @@ const SignupPage: React.FC = () => {
     setError("");
     try {
       // matches AuthController's POST /auth/signup, which returns { jwt, message, status }
+      // no role is sent: the backend always creates new accounts as ROLE_USER regardless
       await axiosInstance.post("/auth/signup", {
         email,
         password,
-        role,
         fullName,
       });
       navigate("/login");
@@ -70,18 +60,6 @@ const SignupPage: React.FC = () => {
             onChange={e => setPassword(e.target.value)}
             required
           />
-          <select
-            className="w-full mb-6 px-4 py-2 rounded border border-gray-300 dark:bg-gray-700 dark:text-white"
-            value={role}
-            onChange={e => setRole(e.target.value)}
-            required
-          >
-            {roles.map(r => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
           {error && <div className="text-red-500 mb-4">{error}</div>}
           <button
             type="submit"

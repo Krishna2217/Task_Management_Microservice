@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { isAxiosError } from "axios";
 import { FaEdit, FaKey, FaBell, FaFileExport, FaTrash } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
 import type { BackendTask } from "../utils/taskMapper";
+import { ALL_ROLES, roleLabel } from "../utils/roles";
 
 interface UserProfile {
   fullName: string;
@@ -17,10 +19,38 @@ interface UserStat {
   value: number;
 }
 
+interface RoleChangeRequest {
+  id: number;
+  currentRole: string;
+  requestedRole: string;
+  status: string;
+  requestedAt: string;
+}
+
+const requestStatusClasses = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return "bg-green-500/20 text-green-300 border-green-500/30";
+    case "REJECTED":
+      return "bg-red-500/20 text-red-300 border-red-500/30";
+    default:
+      return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+  }
+};
+
 const UserProfilePage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStat[] | null>(null);
+  const [roleRequests, setRoleRequests] = useState<RoleChangeRequest[]>([]);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const navigate = useNavigate();
+
+  const fetchRoleRequests = async () => {
+    const res = await axiosInstance.get<RoleChangeRequest[]>("/api/users/role-requests/mine");
+    setRoleRequests(res.data);
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -34,10 +64,28 @@ const UserProfilePage: React.FC = () => {
         { label: "Tasks Completed", value: completed },
         { label: "Tasks In Progress", value: tasksRes.data.length - completed },
       ]);
+      await fetchRoleRequests();
     };
 
     fetchUserData();
   }, []);
+
+  const hasPendingRequest = roleRequests.some((r) => r.status === "PENDING");
+
+  const handleRequestRoleChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRequestError("");
+    setSubmittingRequest(true);
+    try {
+      await axiosInstance.post("/api/users/role-requests", { requestedRole: selectedRole });
+      setSelectedRole("");
+      await fetchRoleRequests();
+    } catch (err) {
+      setRequestError(isAxiosError(err) ? err.response?.data?.message || "Failed to submit request." : "Failed to submit request.");
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("This will permanently delete your account. Continue?")) return;
@@ -107,6 +155,60 @@ const UserProfilePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </motion.div>
+
+              {/* Request a Role Change */}
+              <motion.div
+                className="bg-white/10 dark:bg-gray-800/50 p-6 rounded-xl shadow-lg"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <h3 className="text-xl font-bold text-white mb-4">Request a Role Change</h3>
+                {hasPendingRequest ? (
+                  <p className="text-yellow-300 text-sm mb-4">
+                    You already have a pending request. An admin needs to review it before you can submit another.
+                  </p>
+                ) : (
+                  <form onSubmit={handleRequestRoleChange} className="flex flex-col sm:flex-row gap-3 mb-4">
+                    <select
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                      required
+                      className="flex-grow px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    >
+                      <option value="" disabled>Select a role to request</option>
+                      {ALL_ROLES.filter((r) => r.value !== userProfile.role).map((r) => (
+                        <option key={r.value} value={r.value} className="bg-gray-800">
+                          {r.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      disabled={submittingRequest}
+                      className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-colors disabled:bg-purple-400/50 disabled:cursor-not-allowed"
+                    >
+                      {submittingRequest ? "Submitting..." : "Request"}
+                    </button>
+                  </form>
+                )}
+                {requestError && <p className="text-red-400 text-sm mb-4">{requestError}</p>}
+
+                {roleRequests.length > 0 && (
+                  <div className="space-y-2">
+                    {roleRequests.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between bg-black/20 rounded-lg px-4 py-2">
+                        <span className="text-sm text-purple-200">
+                          {roleLabel(r.currentRole)} &rarr; {roleLabel(r.requestedRole)}
+                        </span>
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${requestStatusClasses(r.status)}`}>
+                          {r.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Account Settings Section */}

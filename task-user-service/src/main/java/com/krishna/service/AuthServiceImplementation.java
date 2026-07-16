@@ -44,7 +44,8 @@ public class AuthServiceImplementation implements AuthService {
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(user.getPassword()));
         newUser.setFullName(user.getFullName());
-        newUser.setRole(user.getRole());
+        // ignore any role submitted at signup; everyone starts as ROLE_USER and only an admin can promote them
+        newUser.setRole("ROLE_USER");
         userRepository.save(newUser);
 
         // Generate JWT token for the user
