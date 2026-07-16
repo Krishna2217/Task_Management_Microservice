@@ -7,15 +7,21 @@ import { mapBackendTask, fetchUserNamesById, type BackendTask } from "../utils/t
 const TaskListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const [res, userNamesById] = await Promise.all([
-          axiosInstance.get<BackendTask[]>("/api/task/user"),
+        const [profileRes, userNamesById] = await Promise.all([
+          axiosInstance.get<{ role: string }>("/api/users/profile"),
           fetchUserNamesById(),
         ]);
+        const admin = profileRes.data.role === "ROLE_ADMIN";
+        setIsAdmin(admin);
+
+        // admins see every task in the system; everyone else sees just what's assigned to them
+        const res = await axiosInstance.get<BackendTask[]>(admin ? "/api/task" : "/api/task/user");
         setTasks(res.data.map((task) => mapBackendTask(task, userNamesById)));
       } finally {
         setLoading(false);
@@ -47,17 +53,17 @@ const TaskListPage: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl md:text-4xl font-extrabold text-white dark:text-purple-200 drop-shadow-lg">
-          Your Tasks
+          {isAdmin ? "All Tasks" : "Your Tasks"}
         </h1>
         <p className="mt-1 text-lg text-purple-200 dark:text-purple-300">
-          Here is a list of tasks assigned to you.
+          {isAdmin ? "Here is every task in the system." : "Here is a list of tasks assigned to you."}
         </p>
       </motion.div>
 
       {loading ? (
         <p className="text-purple-300">Loading tasks...</p>
       ) : tasks.length === 0 ? (
-        <p className="text-purple-300">No tasks assigned to you yet.</p>
+        <p className="text-purple-300">{isAdmin ? "No tasks found." : "No tasks assigned to you yet."}</p>
       ) : (
         <motion.div
           className="space-y-6"
