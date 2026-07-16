@@ -49,8 +49,8 @@ const Navbar: React.FC = () => {
               {isLoggedIn && (
                 <>
                   <NavLink to="/dashboard" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Dashboard</NavLink>
-                  <NavLink to="/tasks" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>My Tasks</NavLink>
-                  <NavLink to="/profile" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Profile</NavLink>
+                  <NavLink to="/dashboard/tasks/assigned" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>My Tasks</NavLink>
+                  <NavLink to="/dashboard/profile" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Profile</NavLink>
                 </>
               )}
             </div>
@@ -98,8 +98,8 @@ const Navbar: React.FC = () => {
           {isLoggedIn && (
             <>
               <NavLink to="/dashboard" className={({ isActive }) => `block ${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Dashboard</NavLink>
-              <NavLink to="/tasks" className={({ isActive }) => `block ${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>My Tasks</NavLink>
-              <NavLink to="/profile" className={({ isActive }) => `block ${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Profile</NavLink>
+              <NavLink to="/dashboard/tasks/assigned" className={({ isActive }) => `block ${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>My Tasks</NavLink>
+              <NavLink to="/dashboard/profile" className={({ isActive }) => `block ${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Profile</NavLink>
             </>
           )}
         </div>
