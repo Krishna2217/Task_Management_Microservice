@@ -1,15 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useTheme } from "../context/ThemeContext"; // Import the hook
 
 const logoUrl =
     "https://w7.pngwing.com/pngs/398/1016/png-transparent-task-manager-task-management-action-item-tasks-together-orange-logo-sign.png";
 
 const HeroSection: React.FC = () => {
-    // Use the global theme state. No local state or useEffect needed here anymore!
-    const { darkMode } = useTheme();
-
     return (
         // Note: The Navbar is now separate, so this component doesn't need a header.
         // The background is applied to a main content area.

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import axiosInstance from "../utils/axiosInstance";
 
 const roles = [
@@ -21,27 +22,23 @@ const SignupPage: React.FC = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // setError("");
-    // try {
-    //   const res = await axiosInstance.post("/auth/signup", {
-    //     email,
-    //     password,
-    //     role,
-    //     fullName,
-    //   });
-    //   const { token, role: userRole } = res.data;
-    //   localStorage.setItem("token", token);
-    //   localStorage.setItem("role", userRole);
-    //   // Redirect based on role
-    //   if (userRole === "ROLE_ADMIN") {
-    //     navigate("/admin");
-    //   } else {
-    //     navigate("/dashboard");
-    //   }
-    // } catch (err: any) {
-    //   setError(err.response?.data?.message || "Signup failed");
-    // }
-    navigate("/login");
+    setError("");
+    try {
+      // matches AuthController's POST /auth/signup, which returns { jwt, message, status }
+      await axiosInstance.post("/auth/signup", {
+        email,
+        password,
+        role,
+        fullName,
+      });
+      navigate("/login");
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message || "Signup failed");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    }
   };
 
   return (

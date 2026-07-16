@@ -18,7 +18,7 @@ const EditProfilePage: React.FC = () => {
   // State for form fields, pre-populated from useEffect
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [avatar, setAvatar] = useState(currentUser.avatarUrl);
+  const [avatar] = useState(currentUser.avatarUrl);
 
   // State for handling form submission
   const [loading, setLoading] = useState(false);

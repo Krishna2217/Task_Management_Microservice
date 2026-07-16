@@ -63,3 +63,6 @@ Thumbs.db
 
 # Claude Code project instructions (kept local only)
 CLAUDE.md
+
+# Local Docker Compose secrets (copy from .env.example)
+.env

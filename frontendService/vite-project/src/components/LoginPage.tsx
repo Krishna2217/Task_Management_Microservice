@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios, { isAxiosError } from "axios"; // Import axios
+import { isAxiosError } from "axios";
+import axiosInstance from "../utils/axiosInstance";
 
 const LoginPage: React.FC = () => {
   // State for form inputs
@@ -21,15 +22,13 @@ const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      // Using axios for the POST request.
-      // Axios automatically stringifies the object and sets the correct headers.
-      const response = await axios.post("/api/auth/login", {
+      // matches AuthController's POST /auth/signin, which returns { jwt, message, status }
+      const response = await axiosInstance.post("/auth/signin", {
         email,
         password,
       });
 
-      // Axios places the response data in the `data` property
-      const token = response.data.token;
+      const token = response.data.jwt;
 
       if (token) {
         // Store the JWT token in localStorage

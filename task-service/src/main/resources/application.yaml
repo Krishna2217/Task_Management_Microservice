@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: TASK-SERVICE
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
 
   datasource:
     # overridable via DB_URL/DB_USER/DB_PASSWORD env vars instead of hardcoding credentials
@@ -22,7 +24,6 @@ spring:
 eureka:
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
   client:
     register-with-eureka: true
     fetch-registry: true
