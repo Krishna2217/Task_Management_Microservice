@@ -3,9 +3,13 @@ package com.krishna.service;
 import com.krishna.modal.Task;
 import com.krishna.modal.TaskStatus;
 import com.krishna.repository.TaskRepository;
+import com.krishna.request.CreateTaskRequest;
+import com.krishna.request.UpdateTaskRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,11 +24,17 @@ public class TaskServiceImplementation implements TaskService {
     private TaskRepository taskRepository;
 
     @Override
-    public Task createTask(Task task, String requesterRole) throws Exception {
+    public Task createTask(CreateTaskRequest request, String requesterRole) throws Exception {
         log.info("The requester role is {}", requesterRole);
         if(!requesterRole.equals("ROLE_ADMIN")){
           throw new Exception("Only admin can create task");
         }
+        Task task = new Task();
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setImage(request.getImage());
+        task.setTags(request.getTags());
+        task.setDeadline(request.getDeadline());
         task.setStatus(TaskStatus.PENDING);
         task.setCreatedAt(LocalDateTime.now());
         return taskRepository.save(task);
@@ -37,22 +47,24 @@ public class TaskServiceImplementation implements TaskService {
     }
 
     @Override
-    public List<Task> getAllTasks(TaskStatus status) throws Exception {
-        log.info("status is {}", status);
-        List<Task> allTask = taskRepository.findAll();
-        List<Task> filteredTask = allTask.stream().filter(
-                task->status==null || task.getStatus().name().equalsIgnoreCase(status.toString())
-
-        ).collect(Collectors.toList());
-        return filteredTask;
+    public Page<Task> getAllTasks(TaskStatus status, Long assignedUserId, Pageable pageable) {
+        log.info("status is {}, assignedUserId is {}", status, assignedUserId);
+        if (status != null && assignedUserId != null) {
+            return taskRepository.findAllByAssignedUserIdAndStatus(assignedUserId, status, pageable);
+        }
+        if (status != null) {
+            return taskRepository.findAllByStatus(status, pageable);
+        }
+        if (assignedUserId != null) {
+            return taskRepository.findAllByAssignedUserId(assignedUserId, pageable);
+        }
+        return taskRepository.findAll(pageable);
     }
 
     @Override
-    public Task updateTask(Long id, Task updatedTask, Long UserId) throws Exception {
+    public Task updateTask(Long id, UpdateTaskRequest updatedTask, Long UserId) throws Exception {
         Task existingTask = getTaskById(id);
-        if(updatedTask.getTitle()!=null){
-            existingTask.setTitle(updatedTask.getTitle());
-        }
+        existingTask.setTitle(updatedTask.getTitle());
         if(updatedTask.getDescription()!=null){
             existingTask.setDescription(updatedTask.getDescription());
         }

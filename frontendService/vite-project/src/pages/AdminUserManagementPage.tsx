@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import { ALL_ROLES, roleLabel } from "../utils/roles";
+import type { Page } from "../utils/page";
 
 interface AppUser {
   id: number;
@@ -42,11 +43,11 @@ const AdminUserManagementPage: React.FC = () => {
   const fetchAll = async () => {
     const [profileRes, usersRes, requestsRes] = await Promise.all([
       axiosInstance.get<{ role: string }>("/api/users/profile"),
-      axiosInstance.get<AppUser[]>("/api/users"),
+      axiosInstance.get<Page<AppUser>>("/api/users", { params: { size: 100 } }),
       axiosInstance.get<RoleChangeRequest[]>("/api/users/role-requests"),
     ]);
     setRole(profileRes.data.role);
-    setUsers(usersRes.data);
+    setUsers(usersRes.data.content);
     setRequests(requestsRes.data);
   };
 

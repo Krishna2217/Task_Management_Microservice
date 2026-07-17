@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { isAxiosError } from "axios";
 import axiosInstance from "../utils/axiosInstance";
+import type { Page } from "../utils/page";
 
 interface Submission {
   id: number;
@@ -33,8 +34,10 @@ const TaskSubmissionsPage: React.FC = () => {
   const [error, setError] = useState("");
 
   const fetchSubmissions = async () => {
-    const res = await axiosInstance.get<Submission[]>(`/api/submission/task/${id}`);
-    setSubmissions(res.data);
+    const res = await axiosInstance.get<Page<Submission>>(`/api/submission/task/${id}`, {
+      params: { size: 100 },
+    });
+    setSubmissions(res.data.content);
   };
 
   useEffect(() => {
@@ -46,13 +49,14 @@ const TaskSubmissionsPage: React.FC = () => {
     setSubmitting(true);
     setError("");
     try {
-      await axiosInstance.post("/api/submission", null, {
-        params: { task_id: id, github_link: githubLink },
+      await axiosInstance.post("/api/submission", {
+        taskId: Number(id),
+        githubLink,
       });
       setGithubLink("");
       await fetchSubmissions();
     } catch (err) {
-      setError(isAxiosError(err) ? err.response?.data?.message || "Failed to submit." : "Failed to submit.");
+      setError(isAxiosError(err) ? err.response?.data?.detail || "Failed to submit." : "Failed to submit.");
     } finally {
       setSubmitting(false);
     }

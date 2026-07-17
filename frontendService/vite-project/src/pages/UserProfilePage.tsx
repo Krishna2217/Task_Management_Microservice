@@ -81,7 +81,7 @@ const UserProfilePage: React.FC = () => {
       setSelectedRole("");
       await fetchRoleRequests();
     } catch (err) {
-      setRequestError(isAxiosError(err) ? err.response?.data?.message || "Failed to submit request." : "Failed to submit request.");
+      setRequestError(isAxiosError(err) ? err.response?.data?.detail || "Failed to submit request." : "Failed to submit request.");
     } finally {
       setSubmittingRequest(false);
     }

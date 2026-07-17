@@ -2,13 +2,15 @@ package com.krishna.controller;
 
 import com.krishna.exception.UserAlreadyExistsException;
 import com.krishna.request.LoginRequest;
+import com.krishna.request.SignupRequest;
 import com.krishna.response.AuthResponse;
-import com.krishna.modal.User;
 import com.krishna.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/auth")
@@ -23,14 +25,15 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signupUser(@RequestBody User user) throws UserAlreadyExistsException {
-        AuthResponse authResponse = authService.registerUser(user);
-        return new ResponseEntity<>(authResponse, HttpStatus.CREATED); // 201 Created
+    public ResponseEntity<AuthResponse> signupUser(@Valid @RequestBody SignupRequest request) throws UserAlreadyExistsException {
+        AuthResponse authResponse = authService.registerUser(request);
+        // the newly created user's own profile, fetchable with the jwt this response includes
+        return ResponseEntity.created(URI.create("/api/users/profile")).body(authResponse);
     }
 
     @PostMapping("/signin")
     public ResponseEntity<AuthResponse> signinUser(@RequestBody LoginRequest loginRequest) {
         AuthResponse authResponse = authService.loginUser(loginRequest);
-        return new ResponseEntity<>(authResponse, HttpStatus.OK); // 200 OK
+        return ResponseEntity.ok(authResponse);
     }
 }

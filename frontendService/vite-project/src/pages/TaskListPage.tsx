@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
 import { mapBackendTask, fetchUserNamesById, type BackendTask } from "../utils/taskMapper";
+import type { Page } from "../utils/page";
 
 const TaskListPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
@@ -20,9 +21,11 @@ const TaskListPage: React.FC = () => {
         const admin = profileRes.data.role === "ROLE_ADMIN";
         setIsAdmin(admin);
 
-        // admins see every task in the system; everyone else sees just what's assigned to them
-        const res = await axiosInstance.get<BackendTask[]>(admin ? "/api/task" : "/api/task/user");
-        setTasks(res.data.map((task) => mapBackendTask(task, userNamesById)));
+        // admins see every task in the system (paginated); everyone else sees just what's assigned to them
+        const tasksData = admin
+          ? (await axiosInstance.get<Page<BackendTask>>("/api/task", { params: { size: 100 } })).data.content
+          : (await axiosInstance.get<BackendTask[]>("/api/task/user")).data;
+        setTasks(tasksData.map((task) => mapBackendTask(task, userNamesById)));
       } finally {
         setLoading(false);
       }

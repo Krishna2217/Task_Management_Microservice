@@ -43,8 +43,8 @@ const LoginPage: React.FC = () => {
       // Axios automatically throws an error for non-2xx responses,
       // which simplifies error handling significantly.
       if (isAxiosError(err)) {
-        // Access the server's error message from err.response.data
-        setError(err.response?.data?.message || "Invalid credentials or server error.");
+        // Access the server's error message from err.response.data (RFC 7807 ProblemDetail)
+        setError(err.response?.data?.detail || "Invalid credentials or server error.");
       } else {
         // Handle non-Axios errors
         setError("An unexpected error occurred. Please try again.");

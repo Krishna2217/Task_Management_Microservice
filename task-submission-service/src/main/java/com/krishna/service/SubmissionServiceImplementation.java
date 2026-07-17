@@ -4,10 +4,11 @@ import com.krishna.modal.Submission;
 import com.krishna.modal.TaskDto;
 import com.krishna.repository.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 @Service
 public class SubmissionServiceImplementation implements SubmissionService{
 
@@ -36,13 +37,22 @@ public class SubmissionServiceImplementation implements SubmissionService{
     }
 
     @Override
-    public List<Submission> getAllTaskSubmissions() throws Exception {
-        return submissionRepository.findAll();
+    public Page<Submission> getAllTaskSubmissions(String status, Long userId, Pageable pageable) {
+        if (status != null && userId != null) {
+            return submissionRepository.findAllByStatusAndUserId(status, userId, pageable);
+        }
+        if (status != null) {
+            return submissionRepository.findAllByStatus(status, pageable);
+        }
+        if (userId != null) {
+            return submissionRepository.findAllByUserId(userId, pageable);
+        }
+        return submissionRepository.findAll(pageable);
     }
 
     @Override
-    public List<Submission> getTaskSubmissionByTaskId(Long taskId) {
-        return submissionRepository.findAllByTaskId(taskId);
+    public Page<Submission> getTaskSubmissionByTaskId(Long taskId, Pageable pageable) {
+        return submissionRepository.findAllByTaskId(taskId, pageable);
     }
 
     @Override

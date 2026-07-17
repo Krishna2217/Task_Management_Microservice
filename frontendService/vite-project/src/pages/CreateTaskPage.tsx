@@ -41,7 +41,7 @@ const CreateTaskPage: React.FC = () => {
       navigate("/dashboard");
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to create task. Only admins can create tasks.");
+        setError(err.response?.data?.detail || "Failed to create task. Only admins can create tasks.");
       } else {
         setError("An unexpected error occurred. Please try again.");
       }

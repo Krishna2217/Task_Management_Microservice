@@ -2,15 +2,21 @@ package com.krishna.controller;
 
 import com.krishna.modal.RoleChangeRequest;
 import com.krishna.modal.User;
+import com.krishna.request.ChangePasswordRequest;
 import com.krishna.request.RoleChangeRequestDto;
 import com.krishna.request.RoleUpdateRequest;
+import com.krishna.request.UpdateProfileRequest;
+import com.krishna.response.RoleChangeRequestResponse;
 import com.krishna.response.UserResponse;
 import com.krishna.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -25,25 +31,34 @@ public class UserController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<UserResponse>> getAllUsers(){
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users.stream().map(UserResponse::from).toList());
+    public ResponseEntity<Page<UserResponse>> getAllUsers(Pageable pageable){
+        Page<UserResponse> users = userService.getAllUsers(pageable).map(UserResponse::from);
+        return ResponseEntity.ok(users);
     }
 
-    // Update user profile
+    // Update user profile (name only - password changes go through /profile/password)
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateUserProfile(
             @RequestHeader("Authorization") String jwt,
-            @RequestBody User updatedUser) {
+            @Valid @RequestBody UpdateProfileRequest updatedUser) {
         User user = userService.updateUserProfile(jwt, updatedUser);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
+    // Change password: requires the current password to be supplied and verified
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @RequestHeader("Authorization") String jwt,
+            @Valid @RequestBody ChangePasswordRequest request) throws Exception {
+        userService.changePassword(jwt, request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
+
     // Delete user profile
     @DeleteMapping("/profile")
-    public ResponseEntity<String> deleteUserProfile(@RequestHeader("Authorization") String jwt) {
+    public ResponseEntity<Void> deleteUserProfile(@RequestHeader("Authorization") String jwt) {
         userService.deleteUserProfile(jwt);
-        return ResponseEntity.ok("User profile deleted successfully.");
+        return ResponseEntity.noContent().build();
     }
 
     // Admin-only: directly change another user's role
@@ -58,40 +73,43 @@ public class UserController {
 
     // Self-service: request a role change, pending admin approval
     @PostMapping("/role-requests")
-    public ResponseEntity<RoleChangeRequest> createRoleChangeRequest(
+    public ResponseEntity<RoleChangeRequestResponse> createRoleChangeRequest(
             @RequestBody RoleChangeRequestDto requestDto,
             @RequestHeader("Authorization") String jwt) throws Exception {
         RoleChangeRequest request = userService.createRoleChangeRequest(requestDto.getRequestedRole(), jwt);
-        return new ResponseEntity<>(request, HttpStatus.CREATED);
+        return ResponseEntity.created(URI.create("/api/users/role-requests/mine"))
+                .body(RoleChangeRequestResponse.from(request));
     }
 
     // The current user's own role-change requests
     @GetMapping("/role-requests/mine")
-    public ResponseEntity<List<RoleChangeRequest>> getMyRoleChangeRequests(
+    public ResponseEntity<List<RoleChangeRequestResponse>> getMyRoleChangeRequests(
             @RequestHeader("Authorization") String jwt) {
-        return ResponseEntity.ok(userService.getMyRoleChangeRequests(jwt));
+        return ResponseEntity.ok(userService.getMyRoleChangeRequests(jwt).stream()
+                .map(RoleChangeRequestResponse::from).toList());
     }
 
     // Admin-only: every role-change request in the system
     @GetMapping("/role-requests")
-    public ResponseEntity<List<RoleChangeRequest>> getAllRoleChangeRequests(
+    public ResponseEntity<List<RoleChangeRequestResponse>> getAllRoleChangeRequests(
             @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(userService.getAllRoleChangeRequests(jwt));
+        return ResponseEntity.ok(userService.getAllRoleChangeRequests(jwt).stream()
+                .map(RoleChangeRequestResponse::from).toList());
     }
 
     // Admin-only: approve a pending request (applies the new role)
     @PutMapping("/role-requests/{id}/approve")
-    public ResponseEntity<RoleChangeRequest> approveRoleChangeRequest(
+    public ResponseEntity<RoleChangeRequestResponse> approveRoleChangeRequest(
             @PathVariable Long id,
             @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(userService.reviewRoleChangeRequest(id, "APPROVE", jwt));
+        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "APPROVE", jwt)));
     }
 
     // Admin-only: reject a pending request
     @PutMapping("/role-requests/{id}/reject")
-    public ResponseEntity<RoleChangeRequest> rejectRoleChangeRequest(
+    public ResponseEntity<RoleChangeRequestResponse> rejectRoleChangeRequest(
             @PathVariable Long id,
             @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(userService.reviewRoleChangeRequest(id, "REJECT", jwt));
+        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "REJECT", jwt)));
     }
 }

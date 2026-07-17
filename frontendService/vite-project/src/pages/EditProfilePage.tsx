@@ -18,14 +18,18 @@ const EditProfilePage: React.FC = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('');
-  // updateUserProfile re-encodes and overwrites the password on every save, so it must always be supplied
-  const [password, setPassword] = useState('');
 
-  const [loading, setLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
+  const [savingProfile, setSavingProfile] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
+
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -33,7 +37,6 @@ const EditProfilePage: React.FC = () => {
         const res = await axiosInstance.get<UserProfile>("/api/users/profile");
         setName(res.data.fullName);
         setEmail(res.data.email);
-        setRole(res.data.role);
       } finally {
         setFetching(false);
       }
@@ -49,31 +52,47 @@ const EditProfilePage: React.FC = () => {
     alert('Avatar change functionality is not yet implemented.');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    setError('');
+    setSavingProfile(true);
+    setProfileMessage('');
+    setProfileError('');
 
     try {
-      await axiosInstance.put("/api/users/profile", {
-        fullName: name,
-        email,
-        role,
-        password,
-      });
-
-      setMessage('Profile updated successfully!');
+      await axiosInstance.put("/api/users/profile", { fullName: name });
+      setProfileMessage('Profile updated successfully!');
       setTimeout(() => {
         navigate('/dashboard/profile');
       }, 1500);
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
+        setProfileError(err.response?.data?.detail || 'Failed to update profile. Please try again.');
       } else {
-        setError('Failed to update profile. Please try again.');
+        setProfileError('Failed to update profile. Please try again.');
       }
-      setLoading(false);
+      setSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPassword(true);
+    setPasswordMessage('');
+    setPasswordError('');
+
+    try {
+      await axiosInstance.put("/api/users/password", { currentPassword, newPassword });
+      setPasswordMessage('Password changed successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setPasswordError(err.response?.data?.detail || 'Failed to change password. Please try again.');
+      } else {
+        setPasswordError('Failed to change password. Please try again.');
+      }
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -87,7 +106,7 @@ const EditProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-purple-800 dark:from-purple-900 dark:to-gray-900 text-white pt-24 sm:pt-32 pb-16 sm:pb-24">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -104,7 +123,7 @@ const EditProfilePage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmitProfile}>
             {/* Avatar Section */}
             <div className="flex flex-col items-center mb-8">
               <div className="relative">
@@ -152,49 +171,82 @@ const EditProfilePage: React.FC = () => {
                 />
                 <p className="mt-1 text-xs text-purple-300/70">Email cannot be changed.</p>
               </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-purple-200 mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  placeholder="Re-enter your password to confirm changes"
-                  required
-                />
-                <p className="mt-1 text-xs text-purple-300/70">
-                  Required to save changes. Enter a new password here to change it.
-                </p>
-              </div>
             </div>
 
             {/* Feedback Messages */}
             <div className="mt-6 text-center h-5">
-              {message && <p className="text-green-400">{message}</p>}
-              {error && <p className="text-red-400">{error}</p>}
+              {profileMessage && <p className="text-green-400">{profileMessage}</p>}
+              {profileError && <p className="text-red-400">{profileError}</p>}
             </div>
 
             {/* Action Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={savingProfile}
                 className="w-full px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition-colors disabled:bg-green-400/50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {savingProfile ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/profile')}
-                disabled={loading}
+                disabled={savingProfile}
                 className="w-full px-6 py-3 bg-gray-500/50 text-white font-semibold rounded-lg shadow-md hover:bg-gray-500/70 transition-colors"
               >
                 Cancel
               </button>
             </div>
+          </form>
+        </motion.div>
+
+        {/* Change Password */}
+        <motion.div
+          className="bg-white/10 dark:bg-gray-800/50 p-6 sm:p-8 rounded-xl shadow-lg backdrop-blur-sm"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <h2 className="text-xl font-bold text-white mb-4">Change Password</h2>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-purple-200 mb-1">
+                Current Password
+              </label>
+              <input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-purple-200 mb-1">
+                New Password
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8}
+                className="w-full px-4 py-2 rounded-lg border border-purple-500/30 bg-white/5 dark:bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                required
+              />
+            </div>
+            <div className="text-center h-5">
+              {passwordMessage && <p className="text-green-400">{passwordMessage}</p>}
+              {passwordError && <p className="text-red-400">{passwordError}</p>}
+            </div>
+            <button
+              type="submit"
+              disabled={changingPassword}
+              className="w-full px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-colors disabled:bg-purple-400/50 disabled:cursor-not-allowed"
+            >
+              {changingPassword ? 'Changing...' : 'Change Password'}
+            </button>
           </form>
         </motion.div>
       </div>

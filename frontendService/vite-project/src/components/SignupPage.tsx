@@ -24,7 +24,7 @@ const SignupPage: React.FC = () => {
       navigate("/login");
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Signup failed");
+        setError(err.response?.data?.detail || "Signup failed");
       } else {
         setError("An unexpected error occurred. Please try again.");
       }

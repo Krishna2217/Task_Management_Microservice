@@ -56,7 +56,7 @@ const EditTaskPage: React.FC = () => {
       });
       navigate("/dashboard");
     } catch (err) {
-      setError(isAxiosError(err) ? err.response?.data?.message || "Failed to update task." : "Failed to update task.");
+      setError(isAxiosError(err) ? err.response?.data?.detail || "Failed to update task." : "Failed to update task.");
       setSubmitting(false);
     }
   };

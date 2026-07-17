@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FaUsers, FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import axiosInstance from "../utils/axiosInstance";
 import { fetchUserNamesById, type BackendTask } from "../utils/taskMapper";
+import type { Page } from "../utils/page";
 
 const statusClasses = (status: string) => {
   switch (status) {
@@ -27,11 +28,11 @@ const AdminTaskOverviewPage: React.FC = () => {
       try {
         const [profileRes, tasksRes, names] = await Promise.all([
           axiosInstance.get<{ role: string }>("/api/users/profile"),
-          axiosInstance.get<BackendTask[]>("/api/task"),
+          axiosInstance.get<Page<BackendTask>>("/api/task", { params: { size: 100 } }),
           fetchUserNamesById(),
         ]);
         setRole(profileRes.data.role);
-        setTasks(tasksRes.data);
+        setTasks(tasksRes.data.content);
         setUserNamesById(names);
       } finally {
         setLoading(false);

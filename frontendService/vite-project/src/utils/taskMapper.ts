@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import type { TaskCardProps } from "../components/TaskCard";
+import type { Page } from "./page";
 
 export const DEFAULT_TASK_IMAGE = "https://cdn-icons-png.flaticon.com/512/1147/1147805.png";
 
@@ -46,7 +47,10 @@ export const mapBackendTask = (
 });
 
 // GET /api/users (USER-SERVICE) is the source of truth for resolving assignedUserId -> a display name
+// requests the max page size since this is used to build a lookup map, not to paginate a UI list
 export const fetchUserNamesById = async (): Promise<Record<number, string>> => {
-  const res = await axiosInstance.get<{ id: number; fullName: string }[]>("/api/users");
-  return Object.fromEntries(res.data.map((u) => [u.id, u.fullName]));
+  const res = await axiosInstance.get<Page<{ id: number; fullName: string }>>("/api/users", {
+    params: { size: 100 },
+  });
+  return Object.fromEntries(res.data.content.map((u) => [u.id, u.fullName]));
 };

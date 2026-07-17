@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import type { BackendTask } from "../utils/taskMapper";
+import type { Page } from "../utils/page";
 
 interface AppUser {
   id: number;
@@ -25,10 +26,10 @@ const AssignTaskPage: React.FC = () => {
       try {
         const [taskRes, usersRes] = await Promise.all([
           axiosInstance.get<BackendTask>(`/api/task/${id}`),
-          axiosInstance.get<AppUser[]>("/api/users"),
+          axiosInstance.get<Page<AppUser>>("/api/users", { params: { size: 100 } }),
         ]);
         setTask(taskRes.data);
-        setUsers(usersRes.data);
+        setUsers(usersRes.data.content);
       } finally {
         setLoading(false);
       }

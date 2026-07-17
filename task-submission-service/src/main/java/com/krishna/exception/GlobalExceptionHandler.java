@@ -1,10 +1,9 @@
 package com.krishna.exception;
 
+import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,19 +37,10 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ProblemDetail handleUserAlreadyExists(UserAlreadyExistsException ex, HttpServletRequest request) {
-        return problemDetail(HttpStatus.CONFLICT, "User Already Exists", "USER_ALREADY_EXISTS", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ProblemDetail handleUsernameNotFound(UsernameNotFoundException ex, HttpServletRequest request) {
-        return problemDetail(HttpStatus.NOT_FOUND, "Not Found", "USER_NOT_FOUND", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ProblemDetail handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
-        return problemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "BAD_CREDENTIALS", ex.getMessage(), request);
+    @ExceptionHandler(FeignException.class)
+    public ProblemDetail handleFeignException(FeignException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.BAD_GATEWAY, "Upstream Service Error", "UPSTREAM_SERVICE_ERROR",
+                "A dependent service call failed", request);
     }
 
     @ExceptionHandler(Exception.class)

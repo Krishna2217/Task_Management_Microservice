@@ -5,6 +5,7 @@ import com.krishna.exception.UserAlreadyExistsException;
 import com.krishna.modal.User;
 import com.krishna.repository.UserRepository;
 import com.krishna.request.LoginRequest;
+import com.krishna.request.SignupRequest;
 import com.krishna.response.AuthResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,9 +33,9 @@ public class AuthServiceImplementation implements AuthService {
 
     // Register a new user
     @Override
-    public AuthResponse registerUser(User user) throws UserAlreadyExistsException {
+    public AuthResponse registerUser(SignupRequest request) throws UserAlreadyExistsException {
         // Check if the user already exists
-        String email = user.getEmail();
+        String email = request.getEmail();
         if (userRepository.findByEmail(email) != null) {
             throw new UserAlreadyExistsException("Email already exists: " + email);
         }
@@ -42,14 +43,14 @@ public class AuthServiceImplementation implements AuthService {
         // Save the new user
         User newUser = new User();
         newUser.setEmail(email);
-        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        newUser.setFullName(user.getFullName());
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        newUser.setFullName(request.getFullName());
         // ignore any role submitted at signup; everyone starts as ROLE_USER and only an admin can promote them
         newUser.setRole("ROLE_USER");
         userRepository.save(newUser);
 
         // Generate JWT token for the user
-        Authentication authentication = new UsernamePasswordAuthenticationToken(email, user.getPassword());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(email, request.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String token = jwtProvider.generateToken(authentication);

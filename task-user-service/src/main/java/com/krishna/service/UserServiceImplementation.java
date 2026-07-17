@@ -5,7 +5,11 @@ import com.krishna.modal.RoleChangeRequest;
 import com.krishna.modal.User;
 import com.krishna.repository.RoleChangeRequestRepository;
 import com.krishna.repository.UserRepository;
+import com.krishna.request.UpdateProfileRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,21 +34,34 @@ public class UserServiceImplementation implements UserService{
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
 
     @Override
-    public User updateUserProfile(String jwt, User updatedUser) {
+    public User updateUserProfile(String jwt, UpdateProfileRequest updatedUser) {
         String email = jwtProvider.getEmailFromJwtToken(jwt);
         User user = userRepository.findByEmail(email);
         if (user==null){
             throw new UsernameNotFoundException("User not found with email"+ email);
         }
         user.setFullName(updatedUser.getFullName());
-        // role is intentionally not settable here; only an admin can change a user's role (see updateUserRole)
-        user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        // role and password are intentionally not settable here; see updateUserRole and changePassword
         return userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(String jwt, String currentPassword, String newPassword) throws Exception {
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with email " + email);
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     @Override

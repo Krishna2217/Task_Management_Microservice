@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import axiosInstance from "../utils/axiosInstance";
 import TaskCard, { type TaskCardProps } from "../components/TaskCard";
 import { mapBackendTask, type BackendTask } from "../utils/taskMapper";
+import type { Page } from "../utils/page";
 
 const NotAssignedPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskCardProps[]>([]);
@@ -13,10 +14,10 @@ const NotAssignedPage: React.FC = () => {
     const fetchTasks = async () => {
       try {
         // global pool of tasks not yet claimed by anyone
-        const res = await axiosInstance.get<BackendTask[]>("/api/task", {
-          params: { status: "PENDING" },
+        const res = await axiosInstance.get<Page<BackendTask>>("/api/task", {
+          params: { status: "PENDING", size: 100 },
         });
-        setTasks(res.data.map((task) => mapBackendTask(task)));
+        setTasks(res.data.content.map((task) => mapBackendTask(task)));
       } finally {
         setLoading(false);
       }

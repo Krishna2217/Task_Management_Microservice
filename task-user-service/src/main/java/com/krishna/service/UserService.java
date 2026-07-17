@@ -2,15 +2,20 @@ package com.krishna.service;
 
 import com.krishna.modal.RoleChangeRequest;
 import com.krishna.modal.User;
+import com.krishna.request.UpdateProfileRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface UserService {
     public User getUserProfile(String jwt);
 
-    List<User> getAllUsers();
+    Page<User> getAllUsers(Pageable pageable);
 
-    User updateUserProfile(String jwt, User updatedUser);
+    User updateUserProfile(String jwt, UpdateProfileRequest updatedUser);
+
+    void changePassword(String jwt, String currentPassword, String newPassword) throws Exception;
 
     void deleteUserProfile(String jwt);
 
