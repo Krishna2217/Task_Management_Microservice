@@ -34,3 +34,29 @@ eureka:
     fetch-registry: true
     serviceUrl:
       defaultZone: http://localhost:8070/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://tempo:4318}/v1/traces
+  observations:
+    annotations:
+      enabled: true
+
+info:
+  app:
+    name: '@project.name@'
+    version: '@project.version@'

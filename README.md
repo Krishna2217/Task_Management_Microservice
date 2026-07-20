@@ -129,3 +129,43 @@ Copy `.env.example` to `.env` and adjust as needed:
 docker compose build <service-name>   # e.g. frontend, task-service, task-user-service
 docker compose up -d <service-name>
 ```
+
+## Observability (optional)
+
+Metrics, distributed tracing, and structured logging are built into all five backend
+services (Actuator + Micrometer + OpenTelemetry + logstash-logback-encoder), but the
+Prometheus/Grafana/Loki/Tempo stack that visualizes them is opt-in — it lives in a
+separate compose file and only starts if you ask for it:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile monitoring up -d
+```
+
+This adds five more containers on top of the main stack:
+
+| Service | Port | Purpose |
+|---|---|---|
+| `prometheus` | 9090 | Scrapes `/actuator/prometheus` on all 5 services every 15s |
+| `grafana` | 3000 | Dashboards — login `admin` / `$GRAFANA_ADMIN_PASSWORD` (default `admin`) |
+| `loki` | 3100 | Log aggregation |
+| `promtail` | — | Tails every container's Docker logs and ships them to Loki |
+| `tempo` | 3200, 4317, 4318 | Trace storage; receives OTLP traces on 4318 (HTTP) / 4317 (gRPC) |
+
+Open **http://localhost:3000** — Prometheus, Loki, and Tempo are pre-provisioned as
+datasources, and a starter "Task Management - Spring Boot Overview" dashboard (CPU,
+JVM memory, HTTP request rate, and the custom `tasks.*`/`submissions.*` business
+counters) is auto-loaded. For a deeper out-of-the-box dashboard, import
+[grafana.com dashboard ID 4701](https://grafana.com/grafana/dashboards/4701) ("JVM
+(Micrometer)") against the provisioned Prometheus datasource.
+
+Every request through the gateway is traced end-to-end — e.g. a call to
+`GET /api/task/user` produces a single trace spanning `api-gateway` → `task-service`
+→ `task-user-service` (the last hop via the Feign call), viewable in Tempo or via
+Grafana's Explore view. Logs are JSON (with `service`, `traceId`, `spanId` fields) when
+`SPRING_PROFILES_ACTIVE=docker`, so Loki can filter/correlate by either.
+
+To stop just the monitoring stack:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile monitoring down
+```

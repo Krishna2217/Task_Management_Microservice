@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['eureka-server:8070']
+        labels:
+          service: 'eureka-server'
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8000']
+        labels:
+          service: 'api-gateway'
+
+  - job_name: 'task-user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['task-user-service:8081']
+        labels:
+          service: 'task-user-service'
+
+  - job_name: 'task-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['task-service:8082']
+        labels:
+          service: 'task-service'
+
+  - job_name: 'task-submission-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['task-submission-service:8083']
+        labels:
+          service: 'task-submission-service'

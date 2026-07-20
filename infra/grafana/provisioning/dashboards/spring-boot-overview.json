@@ -1,0 +1,135 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "Baseline CPU / JVM memory / HTTP request rate dashboard for the task-management microservices. Hand-written as a lightweight starting point scoped to this project's exact service names (eureka-server, api-gateway, task-user-service, task-service, task-submission-service). For a much richer, community-maintained Spring Boot / Micrometer dashboard, import Grafana.com dashboard ID 4701 (\"JVM (Micrometer)\") via Grafana's Import screen and point it at the 'Prometheus' datasource provisioned here - that ID is referenced by the observability task this file was built for.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "CPU Usage (process_cpu_usage) per service",
+      "description": "Fraction of available CPU used by each JVM process (0-1).",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "process_cpu_usage{job=~\"eureka-server|api-gateway|task-user-service|task-service|task-submission-service\"}",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "JVM Memory Used (jvm_memory_used_bytes) per service",
+      "description": "Heap + non-heap memory used, summed per service.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"eureka-server|api-gateway|task-user-service|task-service|task-submission-service\"})",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "HTTP Request Rate (http_server_requests_seconds_count) per service",
+      "description": "Requests/sec, computed as a 1m rate of the request counter.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count{job=~\"eureka-server|api-gateway|task-user-service|task-service|task-submission-service\"}[1m]))",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Business metrics: tasks & submissions",
+      "description": "Custom counters: tasks.created/assigned/completed (task-service) and submissions.created/accepted/declined (task-submission-service). Note: tasks.created and submissions.created are queried as tasks_total/submissions_total (not tasks_created_total/submissions_created_total) - Micrometer's Prometheus naming convention collapses any counter whose sanitized name ends in \"_created\" because OpenMetrics reserves that exact suffix for an auto-generated counter-creation-timestamp series, so it strips the \"created\" segment. Verified empirically against a live scrape; the underlying Micrometer meter is still named exactly \"tasks.created\"/\"submissions.created\" (see /actuator/metrics).",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(tasks_total[5m])",
+          "legendFormat": "tasks.created",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(tasks_assigned_total[5m])",
+          "legendFormat": "tasks.assigned",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(tasks_completed_total[5m])",
+          "legendFormat": "tasks.completed",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(submissions_total[5m])",
+          "legendFormat": "submissions.created",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(submissions_accepted_total[5m])",
+          "legendFormat": "submissions.accepted",
+          "refId": "E"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(submissions_declined_total[5m])",
+          "legendFormat": "submissions.declined",
+          "refId": "F"
+        }
+      ]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["spring-boot", "micrometer", "task-management"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Task Management - Spring Boot Overview",
+  "uid": "spring-boot-overview",
+  "version": 1,
+  "weekStart": ""
+}

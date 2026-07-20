@@ -5,6 +5,7 @@ import com.krishna.modal.TaskStatus;
 import com.krishna.repository.TaskRepository;
 import com.krishna.request.CreateTaskRequest;
 import com.krishna.request.UpdateTaskRequest;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,8 @@ public class TaskServiceImplementation implements TaskService {
     private static final Logger log = LoggerFactory.getLogger(TaskServiceImplementation.class);
     @Autowired
     private TaskRepository taskRepository;
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     @Override
     public Task createTask(CreateTaskRequest request, String requesterRole) throws Exception {
@@ -37,7 +40,11 @@ public class TaskServiceImplementation implements TaskService {
         task.setDeadline(request.getDeadline());
         task.setStatus(TaskStatus.PENDING);
         task.setCreatedAt(LocalDateTime.now());
-        return taskRepository.save(task);
+        Task saved = taskRepository.save(task);
+        // scrapes as "tasks_total" not "tasks_created_total": OpenMetrics reserves the
+        // "_created" counter suffix, so Micrometer's Prometheus naming convention strips it
+        meterRegistry.counter("tasks.created").increment();
+        return saved;
     }
 
     @Override
@@ -91,7 +98,9 @@ public class TaskServiceImplementation implements TaskService {
         Task task = getTaskById(taskId);
         task.setAssignedUserId(userId);
         task.setStatus(TaskStatus.DONE);
-        return taskRepository.save(task);
+        Task saved = taskRepository.save(task);
+        meterRegistry.counter("tasks.assigned").increment();
+        return saved;
     }
 
     @Override
@@ -108,6 +117,8 @@ public class TaskServiceImplementation implements TaskService {
     public Task completeTask(Long taskId) throws Exception {
        Task task = getTaskById(taskId);
          task.setStatus(TaskStatus.DONE);
-         return taskRepository.save(task);
+         Task saved = taskRepository.save(task);
+         meterRegistry.counter("tasks.completed").increment();
+         return saved;
     }
 }

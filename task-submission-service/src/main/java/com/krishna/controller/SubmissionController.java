@@ -7,6 +7,7 @@ import com.krishna.response.SubmissionResponse;
 import com.krishna.service.SubmissionService;
 import com.krishna.service.TaskService;
 import com.krishna.service.UserService;
+import io.micrometer.core.annotation.Timed;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class SubmissionController {
     @Autowired
     private TaskService taskService;
 
+    @Timed(value = "submission.create", description = "Time taken to submit a task")
     @PostMapping()
     public ResponseEntity<SubmissionResponse> submitTask(
             @Valid @RequestBody SubmitTaskRequest request,
@@ -36,6 +38,7 @@ public class SubmissionController {
         return ResponseEntity.created(URI.create("/api/submission/" + submission.getId()))
                 .body(SubmissionResponse.from(submission));
     }
+    @Timed(value = "submission.get-by-id", description = "Time taken to fetch a submission by id")
     @GetMapping("/{submission_id}")
     public ResponseEntity<SubmissionResponse> getTaskSubmissionById(
             @PathVariable Long submission_id,
@@ -45,6 +48,7 @@ public class SubmissionController {
         Submission submission = submissionService.getTaskSubmissionById(submission_id);
         return ResponseEntity.ok(SubmissionResponse.from(submission));
     }
+    @Timed(value = "submission.get-all", description = "Time taken to list submissions")
     @GetMapping()
     public ResponseEntity<Page<SubmissionResponse>> getAllTaskSubmissions(
             @RequestParam(required = false) String status,
@@ -57,6 +61,7 @@ public class SubmissionController {
                 .map(SubmissionResponse::from);
         return ResponseEntity.ok(submissions);
     }
+    @Timed(value = "submission.get-by-task", description = "Time taken to list submissions for a task")
     @GetMapping("/task/{task_id}")
     public ResponseEntity<Page<SubmissionResponse>> getTaskSubmissionByTaskId(
             @PathVariable Long task_id,
@@ -68,6 +73,7 @@ public class SubmissionController {
                 .map(SubmissionResponse::from);
         return ResponseEntity.ok(submissions);
     }
+    @Timed(value = "submission.review", description = "Time taken to accept/decline a submission")
     @PutMapping("/{submission_id}")
     public ResponseEntity<SubmissionResponse> acceptDeclineTaskSubmission(
             @PathVariable Long submission_id,

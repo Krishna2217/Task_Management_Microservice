@@ -40,3 +40,29 @@ app:
   jwt:
     # overridable via JWT_SECRET env var; the placeholder default is local-dev-only, never use it in a real deployment
     secret: ${JWT_SECRET:changeme-local-only-32-bytes-minimum-length-here}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://tempo:4318}/v1/traces
+  observations:
+    annotations:
+      enabled: true
+
+info:
+  app:
+    name: '@project.name@'
+    version: '@project.version@'
