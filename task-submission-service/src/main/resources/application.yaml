@@ -26,6 +26,15 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 3000
 
 eureka:
   instance:
@@ -36,14 +45,51 @@ eureka:
     serviceUrl:
       defaultZone: http://localhost:8070/eureka/
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        minimumNumberOfCalls: 10
+      taskService:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        minimumNumberOfCalls: 10
+  retry:
+    instances:
+      userService:
+        maxAttempts: 3
+        waitDuration: 200ms
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - feign.FeignException$ServiceUnavailable
+          - java.net.SocketTimeoutException
+  bulkhead:
+    instances:
+      userService:
+        maxConcurrentCalls: 25
+
 management:
+  health:
+    circuitbreakers:
+      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,loggers
+        include: health,info,metrics,prometheus,env,loggers,circuitbreakerevents
   endpoint:
     health:
       show-details: when-authorized
+      group:
+        readiness:
+          include: circuitBreakers,diskSpace
   info:
     env:
       enabled: true

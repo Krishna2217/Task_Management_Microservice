@@ -119,6 +119,31 @@
           "refId": "F"
         }
       ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Feign circuit breaker state (per service, per downstream)",
+      "description": "resilience4j_circuitbreaker_state is a 0/1 indicator gauge per (name, state) pair - one series per state, and exactly one is 1 at any time. name = downstream Feign client (userService in task-service and task-submission-service, taskService in task-submission-service); job = which microservice is calling it (which circuit breaker instance). Verified against a live /actuator/prometheus scrape.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "custom": { "fillOpacity": 30, "stacking": { "mode": "none" } }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "resilience4j_circuitbreaker_state{job=~\"task-service|task-submission-service\"}",
+          "legendFormat": "{{job}} -> {{name}} ({{state}})",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "refresh": "15s",

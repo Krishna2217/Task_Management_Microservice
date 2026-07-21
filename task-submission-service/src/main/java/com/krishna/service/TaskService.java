@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 // no hardcoded url: resolve TASK-SERVICE via Eureka so this works across hosts/containers, not just localhost:8082
-@FeignClient(name = "TASK-SERVICE")
+@FeignClient(name = "TASK-SERVICE", fallback = TaskServiceFallback.class)
 public interface TaskService {
     @GetMapping("/api/task/{id}")
     public TaskDto getTaskById(
