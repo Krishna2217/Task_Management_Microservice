@@ -14,13 +14,13 @@ public class TaskServiceFallback implements TaskService {
     private static final Logger log = LoggerFactory.getLogger(TaskServiceFallback.class);
 
     @Override
-    public TaskDto getTaskById(Long id, String jwt) {
+    public TaskDto getTaskById(Long id) {
         log.warn("Falling back for TASK-SERVICE#getTaskById; taskId={}, traceId={}", id, MDC.get("traceId"));
         return unknownTask(id);
     }
 
     @Override
-    public TaskDto completeTask(Long id, String jwt) {
+    public TaskDto completeTask(Long id, Long userId) {
         log.warn("Falling back for TASK-SERVICE#completeTask; taskId={}, traceId={}", id, MDC.get("traceId"));
         return unknownTask(id);
     }

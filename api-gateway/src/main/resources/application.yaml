@@ -7,6 +7,11 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   cloud:
     gateway:
       routes:
@@ -31,6 +36,11 @@ spring:
           args:
             name: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
             strategy: RETAIN_FIRST # Use UPPERCASE here as required by Spring
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+            key-resolver: "#{@userKeyResolver}"
 
       globalcors:
         cors-configuration:
@@ -39,6 +49,11 @@ spring:
             allowedOriginPatterns: "*"
             allowedMethods: "*"
             allowedHeaders: "*"
+
+app:
+  jwt:
+    # must match task-user-service's app.jwt.secret exactly, since the gateway validates the same tokens
+    secret: ${JWT_SECRET:changeme-local-only-32-bytes-minimum-length-here}
 
 eureka:
   instance:

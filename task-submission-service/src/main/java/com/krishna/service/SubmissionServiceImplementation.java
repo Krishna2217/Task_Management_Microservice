@@ -22,8 +22,8 @@ public class SubmissionServiceImplementation implements SubmissionService{
     private MeterRegistry meterRegistry;
 
     @Override
-    public Submission submitTask(Long taskId, String githubLink, Long userId,String jwt) throws Exception {
-        TaskDto task = taskService.getTaskById(taskId, jwt);
+    public Submission submitTask(Long taskId, String githubLink, Long userId) throws Exception {
+        TaskDto task = taskService.getTaskById(taskId);
         if (task != null) {
             Submission submission = new Submission();
             submission.setTaskId(taskId);
@@ -65,12 +65,12 @@ public class SubmissionServiceImplementation implements SubmissionService{
     }
 
     @Override
-    public Submission acceptDeclineTaskSubmission(Long submissionId, String status,String jwt) throws Exception {
+    public Submission acceptDeclineTaskSubmission(Long submissionId, String status, Long reviewerUserId) throws Exception {
         Submission submission = getTaskSubmissionById(submissionId);
         SubmissionStatus newStatus = parseReviewDecision(status);
         submission.setStatus(newStatus);
         if (newStatus == SubmissionStatus.ACCEPTED) {
-            taskService.completeTask(submission.getTaskId(),jwt);
+            taskService.completeTask(submission.getTaskId(), reviewerUserId);
             meterRegistry.counter("submissions.accepted").increment();
         } else if (newStatus == SubmissionStatus.DECLINED) {
             meterRegistry.counter("submissions.declined").increment();

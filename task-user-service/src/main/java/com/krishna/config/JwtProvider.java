@@ -1,23 +1,22 @@
 package com.krishna.config;
 
+import com.krishna.modal.User;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.UUID;
 
-// instance-based (was static) so the signing key can come from injected JwtProperties instead of a hardcoded constant
 @Component
 public class JwtProvider {
+
+    public static final long ACCESS_TOKEN_VALIDITY_MS = 15 * 60 * 1000L;       // 15 minutes
+    public static final long REFRESH_TOKEN_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000L; // 7 days
+
     @Autowired
     private JwtProperties jwtProperties;
 
@@ -25,31 +24,30 @@ public class JwtProvider {
         return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
-    public String generateToken(Authentication auth){
-        Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
-        String roles = populateAuthoritites(authorities);
-        String jwt = Jwts.builder()
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime()+86400000))
-                .claim("email",auth.getName())
-                // jwtTokenValidator reads this claim to restore roles on subsequent requests; it was never set, so RBAC was silently broken
-                .claim("authorities", roles)
+    // the gateway's JwtAuthenticationGlobalFilter reads email/userId/role straight off these
+    // claims and forwards them as X-User-* headers; "authorities" is kept only for the
+    // "standalone" profile's own jwtTokenValidator (no gateway in front of it)
+    public String generateAccessToken(User user) {
+        Date now = new Date();
+        return Jwts.builder()
+                .setId(UUID.randomUUID().toString())
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_VALIDITY_MS))
+                .claim("email", user.getEmail())
+                .claim("userId", user.getId())
+                .claim("role", user.getRole())
+                .claim("authorities", user.getRole())
                 .signWith(key())
                 .compact();
-        return jwt;
-    }
-    public String getEmailFromJwtToken(String jwt){
-        jwt = jwt.substring(7);
-        Claims claims = Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(jwt).getBody();
-        String email = String.valueOf(claims.get("email"));
-        return email;
     }
 
-    private static String populateAuthoritites(Collection<? extends GrantedAuthority> authorities) {
-        Set<String> auths = new HashSet<>();
-        for(GrantedAuthority authority: authorities){
-            auths.add(authority.getAuthority());
-        }
-        return String.join(",",auths);
+    // opaque (not a JWT): the client never needs to read it, only present it back at /auth/refresh,
+    // and an opaque token can't leak claims if it ever ends up somewhere it shouldn't
+    public String generateRefreshToken() {
+        return UUID.randomUUID().toString() + UUID.randomUUID();
+    }
+
+    public Claims parseClaims(String jwt) {
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(jwt).getBody();
     }
 }

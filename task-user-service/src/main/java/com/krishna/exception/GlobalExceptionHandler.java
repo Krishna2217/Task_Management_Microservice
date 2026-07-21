@@ -1,6 +1,8 @@
 package com.krishna.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -17,6 +19,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private ProblemDetail problemDetail(HttpStatus status, String title, String errorCode, String detail, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
@@ -63,8 +67,14 @@ public class GlobalExceptionHandler {
         return problemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "BAD_CREDENTIALS", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ProblemDetail handleInvalidRefreshToken(InvalidRefreshTokenException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "INVALID_REFRESH_TOKEN", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneral(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception on {}", request.getRequestURI(), ex);
         return problemDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "INTERNAL_ERROR", ex.getMessage(), request);
     }
 }

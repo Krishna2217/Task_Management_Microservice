@@ -13,9 +13,6 @@ public class FeignCircuitBreakerConfiguration {
     @Bean
     public CircuitBreakerNameResolver circuitBreakerNameResolver() {
         return (feignClientName, target, method) -> {
-            if ("USER-SERVICE".equalsIgnoreCase(feignClientName)) {
-                return "userService";
-            }
             if ("TASK-SERVICE".equalsIgnoreCase(feignClientName)) {
                 return "taskService";
             }

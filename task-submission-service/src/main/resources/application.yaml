@@ -52,13 +52,6 @@ eureka:
 resilience4j:
   circuitbreaker:
     instances:
-      userService:
-        registerHealthIndicator: true
-        slidingWindowSize: 20
-        failureRateThreshold: 50
-        waitDurationInOpenState: 30s
-        permittedNumberOfCallsInHalfOpenState: 5
-        minimumNumberOfCalls: 10
       taskService:
         registerHealthIndicator: true
         slidingWindowSize: 20
@@ -66,19 +59,6 @@ resilience4j:
         waitDurationInOpenState: 30s
         permittedNumberOfCallsInHalfOpenState: 5
         minimumNumberOfCalls: 10
-  retry:
-    instances:
-      userService:
-        maxAttempts: 3
-        waitDuration: 200ms
-        exponentialBackoffMultiplier: 2
-        retryExceptions:
-          - feign.FeignException$ServiceUnavailable
-          - java.net.SocketTimeoutException
-  bulkhead:
-    instances:
-      userService:
-        maxConcurrentCalls: 25
 
 management:
   health:

@@ -30,15 +30,6 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-  cloud:
-    openfeign:
-      circuitbreaker:
-        enabled: true
-      client:
-        config:
-          default:
-            connectTimeout: 2000
-            readTimeout: 3000
 
 eureka:
   instance:
@@ -49,44 +40,14 @@ eureka:
     serviceUrl:
       defaultZone: http://localhost:8070/eureka/
 
-resilience4j:
-  circuitbreaker:
-    instances:
-      userService:
-        registerHealthIndicator: true
-        slidingWindowSize: 20
-        failureRateThreshold: 50
-        waitDurationInOpenState: 30s
-        permittedNumberOfCallsInHalfOpenState: 5
-        minimumNumberOfCalls: 10
-  retry:
-    instances:
-      userService:
-        maxAttempts: 3
-        waitDuration: 200ms
-        exponentialBackoffMultiplier: 2
-        retryExceptions:
-          - feign.FeignException$ServiceUnavailable
-          - java.net.SocketTimeoutException
-  bulkhead:
-    instances:
-      userService:
-        maxConcurrentCalls: 25
-
 management:
-  health:
-    circuitbreakers:
-      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,loggers,circuitbreakerevents
+        include: health,info,metrics,prometheus,env,loggers
   endpoint:
     health:
       show-details: when-authorized
-      group:
-        readiness:
-          include: circuitBreakers,diskSpace
   info:
     env:
       enabled: true

@@ -1,6 +1,5 @@
 package com.krishna.exception;
 
-import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -35,12 +34,6 @@ public class GlobalExceptionHandler {
         }
         pd.setProperty("fieldErrors", fieldErrors);
         return pd;
-    }
-
-    @ExceptionHandler(FeignException.class)
-    public ProblemDetail handleFeignException(FeignException ex, HttpServletRequest request) {
-        return problemDetail(HttpStatus.BAD_GATEWAY, "Upstream Service Error", "UPSTREAM_SERVICE_ERROR",
-                "A dependent service call failed", request);
     }
 
     @ExceptionHandler(Exception.class)

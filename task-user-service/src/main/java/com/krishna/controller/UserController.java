@@ -19,14 +19,16 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+// every method here trusts X-User-Email, set by the gateway's JwtAuthenticationGlobalFilter after
+// it validates the caller's JWT - the raw Authorization header never reaches this service anymore
 @RestController
 @RequestMapping("api/users")
 public class UserController {
     @Autowired
     private UserService userService;
     @GetMapping("/profile")
-    public ResponseEntity<UserResponse> getUserProfile(@RequestHeader("Authorization") String jwt){
-        User user = userService.getUserProfile(jwt);
+    public ResponseEntity<UserResponse> getUserProfile(@RequestHeader("X-User-Email") String email){
+        User user = userService.getUserProfile(email);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
@@ -39,25 +41,25 @@ public class UserController {
     // Update user profile (name only - password changes go through /profile/password)
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateUserProfile(
-            @RequestHeader("Authorization") String jwt,
+            @RequestHeader("X-User-Email") String email,
             @Valid @RequestBody UpdateProfileRequest updatedUser) {
-        User user = userService.updateUserProfile(jwt, updatedUser);
+        User user = userService.updateUserProfile(email, updatedUser);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
     // Change password: requires the current password to be supplied and verified
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(
-            @RequestHeader("Authorization") String jwt,
+            @RequestHeader("X-User-Email") String email,
             @Valid @RequestBody ChangePasswordRequest request) throws Exception {
-        userService.changePassword(jwt, request.getCurrentPassword(), request.getNewPassword());
+        userService.changePassword(email, request.getCurrentPassword(), request.getNewPassword());
         return ResponseEntity.noContent().build();
     }
 
     // Delete user profile
     @DeleteMapping("/profile")
-    public ResponseEntity<Void> deleteUserProfile(@RequestHeader("Authorization") String jwt) {
-        userService.deleteUserProfile(jwt);
+    public ResponseEntity<Void> deleteUserProfile(@RequestHeader("X-User-Email") String email) {
+        userService.deleteUserProfile(email);
         return ResponseEntity.noContent().build();
     }
 
@@ -66,8 +68,8 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUserRole(
             @PathVariable Long id,
             @RequestBody RoleUpdateRequest request,
-            @RequestHeader("Authorization") String jwt) throws Exception {
-        User user = userService.updateUserRole(id, request.getRole(), jwt);
+            @RequestHeader("X-User-Email") String email) throws Exception {
+        User user = userService.updateUserRole(id, request.getRole(), email);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
@@ -75,8 +77,8 @@ public class UserController {
     @PostMapping("/role-requests")
     public ResponseEntity<RoleChangeRequestResponse> createRoleChangeRequest(
             @RequestBody RoleChangeRequestDto requestDto,
-            @RequestHeader("Authorization") String jwt) throws Exception {
-        RoleChangeRequest request = userService.createRoleChangeRequest(requestDto.getRequestedRole(), jwt);
+            @RequestHeader("X-User-Email") String email) throws Exception {
+        RoleChangeRequest request = userService.createRoleChangeRequest(requestDto.getRequestedRole(), email);
         return ResponseEntity.created(URI.create("/api/users/role-requests/mine"))
                 .body(RoleChangeRequestResponse.from(request));
     }
@@ -84,16 +86,16 @@ public class UserController {
     // The current user's own role-change requests
     @GetMapping("/role-requests/mine")
     public ResponseEntity<List<RoleChangeRequestResponse>> getMyRoleChangeRequests(
-            @RequestHeader("Authorization") String jwt) {
-        return ResponseEntity.ok(userService.getMyRoleChangeRequests(jwt).stream()
+            @RequestHeader("X-User-Email") String email) {
+        return ResponseEntity.ok(userService.getMyRoleChangeRequests(email).stream()
                 .map(RoleChangeRequestResponse::from).toList());
     }
 
     // Admin-only: every role-change request in the system
     @GetMapping("/role-requests")
     public ResponseEntity<List<RoleChangeRequestResponse>> getAllRoleChangeRequests(
-            @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(userService.getAllRoleChangeRequests(jwt).stream()
+            @RequestHeader("X-User-Email") String email) throws Exception {
+        return ResponseEntity.ok(userService.getAllRoleChangeRequests(email).stream()
                 .map(RoleChangeRequestResponse::from).toList());
     }
 
@@ -101,15 +103,15 @@ public class UserController {
     @PutMapping("/role-requests/{id}/approve")
     public ResponseEntity<RoleChangeRequestResponse> approveRoleChangeRequest(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "APPROVE", jwt)));
+            @RequestHeader("X-User-Email") String email) throws Exception {
+        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "APPROVE", email)));
     }
 
     // Admin-only: reject a pending request
     @PutMapping("/role-requests/{id}/reject")
     public ResponseEntity<RoleChangeRequestResponse> rejectRoleChangeRequest(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String jwt) throws Exception {
-        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "REJECT", jwt)));
+            @RequestHeader("X-User-Email") String email) throws Exception {
+        return ResponseEntity.ok(RoleChangeRequestResponse.from(userService.reviewRoleChangeRequest(id, "REJECT", email)));
     }
 }
