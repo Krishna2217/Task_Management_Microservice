@@ -1,13 +1,7 @@
 // src/context/ThemeContext.tsx
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface ThemeContextType {
-  darkMode: boolean;
-  setDarkMode: (dark: boolean) => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import React, { useState, useEffect } from 'react';
+import { ThemeContext } from './themeContextInstance';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -34,13 +28,4 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
     </ThemeContext.Provider>
   );
-};
-
-// Custom hook to use the theme context easily
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 };

@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    # NON_KEYWORDS: "user" and "current_role" collide with H2 reserved words otherwise
+    url: jdbc:h2:mem:task_user_service;MODE=MySQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=USER,CURRENT_ROLE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  tracing:
+    enabled: false

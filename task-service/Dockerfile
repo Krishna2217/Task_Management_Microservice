@@ -1,10 +1,13 @@
 FROM eclipse-temurin:17-jdk AS build
 WORKDIR /app
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+COPY task-service/mvnw .
+COPY task-service/.mvn .mvn
+COPY task-service/pom.xml .
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
-COPY src src
+COPY task-service/src src
+# .git is needed so git-commit-id-maven-plugin can embed the real commit SHA into
+# git.properties; the build context is the repo root specifically for this reason
+COPY .git .git
 RUN ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:17-jre

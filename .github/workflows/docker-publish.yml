@@ -1,0 +1,94 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: krishna2217
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - eureka-server
+          - api-gateway
+          - task-user-service
+          - task-service
+          - task-submission-service
+          - frontend
+        include:
+          # backend services build from the repo root so their Dockerfile can COPY .git in
+          # (git-commit-id-maven-plugin needs it for /actuator/info); frontend needs neither
+          - service: eureka-server
+            context: .
+            dockerfile: eureka-server/Dockerfile
+          - service: api-gateway
+            context: .
+            dockerfile: api-gateway/Dockerfile
+          - service: task-user-service
+            context: .
+            dockerfile: task-user-service/Dockerfile
+          - service: task-service
+            context: .
+            dockerfile: task-service/Dockerfile
+          - service: task-submission-service
+            context: .
+            dockerfile: task-submission-service/Dockerfile
+          - service: frontend
+            context: ./frontendService/vite-project
+            dockerfile: frontendService/vite-project/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/taskmgmt-${{ matrix.service }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Trivy scan (base image + jar dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/taskmgmt-${{ matrix.service }}@${{ steps.build.outputs.digest }}
+          scan-type: image
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true

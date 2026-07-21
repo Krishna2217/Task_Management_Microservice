@@ -123,6 +123,27 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- writes git.properties to the classpath so /actuator/info exposes the git SHA at runtime -->
+			<plugin>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>9.0.1</version>
+				<executions>
+					<execution>
+						<id>get-the-git-infos</id>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+					<!-- degrade gracefully (e.g. a shallow checkout with no .git) instead of failing the build -->
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
+					<failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

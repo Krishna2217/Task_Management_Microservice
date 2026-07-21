@@ -1,9 +1,45 @@
 # Task Management Microservice
 
+[![Backend CI](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/frontend-ci.yml)
+[![Docker Publish](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Krishna2217/Task_Management_Microservice/actions/workflows/docker-publish.yml)
+
 A task management system built as Spring Boot microservices behind a Spring Cloud
 Gateway, with service discovery via Netflix Eureka, JWT-based auth, and a React/Vite
 frontend. Users sign up, get assigned tasks, submit work via a GitHub link, and admins
 manage tasks, submissions, and user roles.
+
+## Container images
+
+Every push to `main` publishes each service to GHCR, tagged with both the commit SHA
+and `latest`; pushing a `vX.Y.Z` tag additionally publishes that version tag:
+
+| Image | Pull |
+|---|---|
+| `eureka-server` | `docker pull ghcr.io/krishna2217/taskmgmt-eureka-server:latest` |
+| `api-gateway` | `docker pull ghcr.io/krishna2217/taskmgmt-api-gateway:latest` |
+| `task-user-service` | `docker pull ghcr.io/krishna2217/taskmgmt-task-user-service:latest` |
+| `task-service` | `docker pull ghcr.io/krishna2217/taskmgmt-task-service:latest` |
+| `task-submission-service` | `docker pull ghcr.io/krishna2217/taskmgmt-task-submission-service:latest` |
+| `frontend` | `docker pull ghcr.io/krishna2217/taskmgmt-frontend:latest` |
+
+All images are listed under the repo's [Packages](https://github.com/Krishna2217?tab=packages&repo_name=Task_Management_Microservice)
+tab. Each is scanned with Trivy on every publish (and on every PR, against a local
+build) — the build fails if a HIGH or CRITICAL vulnerability is found.
+
+## Quick start (from published images)
+
+The fastest way to try the whole stack without building anything locally — copy
+`.env.example` to `.env` first (see [Configuration](#configuration)), then:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+This pulls `latest` for every service per `docker-compose.yml` and starts the
+full stack (MySQL, Redis, Eureka, the gateway, all three backend services, and the
+frontend on http://localhost).
 
 ## Architecture
 

@@ -1,0 +1,86 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  backend-ci:
+    uses: ./.github/workflows/backend-ci.yml
+
+  frontend-ci:
+    uses: ./.github/workflows/frontend-ci.yml
+
+  size-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pascalgn/size-label-action@v0.5.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # docker-publish.yml only runs after a push lands on main, which is too late to block a bad
+  # merge - this rebuilds each image locally (no push) and scans it here instead, so "Trivy scan"
+  # can be made a required status check on the PR itself.
+  trivy-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - eureka-server
+          - api-gateway
+          - task-user-service
+          - task-service
+          - task-submission-service
+          - frontend
+        include:
+          # backend services build from the repo root so their Dockerfile can COPY .git in
+          # (git-commit-id-maven-plugin needs it for /actuator/info); frontend needs neither
+          - service: eureka-server
+            context: .
+            dockerfile: eureka-server/Dockerfile
+          - service: api-gateway
+            context: .
+            dockerfile: api-gateway/Dockerfile
+          - service: task-user-service
+            context: .
+            dockerfile: task-user-service/Dockerfile
+          - service: task-service
+            context: .
+            dockerfile: task-service/Dockerfile
+          - service: task-submission-service
+            context: .
+            dockerfile: task-submission-service/Dockerfile
+          - service: frontend
+            context: ./frontendService/vite-project
+            dockerfile: frontendService/vite-project/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (local only, not pushed)
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: taskmgmt-${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Trivy scan (base image + jar dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: taskmgmt-${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
+          scan-type: image
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true

@@ -30,7 +30,12 @@ services:
       - taskmgmt-net
 
   eureka-server:
-    build: ./eureka-server
+    # context is the repo root (not ./eureka-server) so the Dockerfile can COPY .git in -
+    # git-commit-id-maven-plugin needs it to embed the real commit SHA into /actuator/info
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
+    image: ghcr.io/krishna2217/taskmgmt-eureka-server:latest
     ports:
       - "8070:8070"
     environment:
@@ -39,7 +44,10 @@ services:
       - taskmgmt-net
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    image: ghcr.io/krishna2217/taskmgmt-api-gateway:latest
     ports:
       - "8000:8000"
     environment:
@@ -56,7 +64,10 @@ services:
       - taskmgmt-net
 
   task-user-service:
-    build: ./task-user-service
+    build:
+      context: .
+      dockerfile: task-user-service/Dockerfile
+    image: ghcr.io/krishna2217/taskmgmt-task-user-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_USER: ${DB_USER}
@@ -75,7 +86,10 @@ services:
       - taskmgmt-net
 
   task-service:
-    build: ./task-service
+    build:
+      context: .
+      dockerfile: task-service/Dockerfile
+    image: ghcr.io/krishna2217/taskmgmt-task-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_USER: ${DB_USER}
@@ -89,7 +103,10 @@ services:
       - taskmgmt-net
 
   task-submission-service:
-    build: ./task-submission-service
+    build:
+      context: .
+      dockerfile: task-submission-service/Dockerfile
+    image: ghcr.io/krishna2217/taskmgmt-task-submission-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_USER: ${DB_USER}
@@ -104,6 +121,7 @@ services:
 
   frontend:
     build: ./frontendService/vite-project
+    image: ghcr.io/krishna2217/taskmgmt-frontend:latest
     ports:
       - "80:80"
     depends_on:
