@@ -86,7 +86,7 @@
 		<dependency>
 			<groupId>net.logstash.logback</groupId>
 			<artifactId>logstash-logback-encoder</artifactId>
-			<version>8.0</version>
+			<version>9.0</version>
 		</dependency>
 		<!-- propagates trace context (traceparent) over outbound Feign calls to task-service/task-user-service -->
 		<dependency>
