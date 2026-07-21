@@ -1,6 +1,7 @@
 package com.krishna.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -41,6 +42,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ProblemDetail handleUserAlreadyExists(UserAlreadyExistsException ex, HttpServletRequest request) {
         return problemDetail(HttpStatus.CONFLICT, "User Already Exists", "USER_ALREADY_EXISTS", ex.getMessage(), request);
+    }
+
+    // last line of defense against the uk_user_email race: two signups for the same email can both
+    // pass the application-level findByEmail check before either commits, so the DB constraint is
+    // what actually stops the duplicate - without this handler that violation would surface as a 500
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.CONFLICT, "Conflict", "DATA_INTEGRITY_VIOLATION",
+                "The request could not be completed because it conflicts with existing data", request);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

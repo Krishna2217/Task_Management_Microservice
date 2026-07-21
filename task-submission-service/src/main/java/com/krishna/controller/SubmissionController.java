@@ -4,6 +4,7 @@ import com.krishna.modal.Submission;
 import com.krishna.modal.UserDto;
 import com.krishna.request.SubmitTaskRequest;
 import com.krishna.response.SubmissionResponse;
+import com.krishna.security.CurrentUserIdHolder;
 import com.krishna.service.SubmissionService;
 import com.krishna.service.TaskService;
 import com.krishna.service.UserService;
@@ -34,6 +35,7 @@ public class SubmissionController {
             @Valid @RequestBody SubmitTaskRequest request,
             @RequestHeader ("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Submission submission = submissionService.submitTask(request.getTaskId(), request.getGithubLink(), user.getId(), jwt);
         return ResponseEntity.created(URI.create("/api/submission/" + submission.getId()))
                 .body(SubmissionResponse.from(submission));
@@ -81,6 +83,8 @@ public class SubmissionController {
             @RequestHeader ("Authorization") String jwt
             ) throws Exception {
 
+        UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Submission submission = submissionService.acceptDeclineTaskSubmission(submission_id, status, jwt);
         return ResponseEntity.ok(SubmissionResponse.from(submission));
     }

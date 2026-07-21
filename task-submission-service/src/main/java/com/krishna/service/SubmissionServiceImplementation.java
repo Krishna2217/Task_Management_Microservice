@@ -1,6 +1,7 @@
 package com.krishna.service;
 
 import com.krishna.modal.Submission;
+import com.krishna.modal.SubmissionStatus;
 import com.krishna.modal.TaskDto;
 import com.krishna.repository.SubmissionRepository;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -45,11 +46,12 @@ public class SubmissionServiceImplementation implements SubmissionService{
 
     @Override
     public Page<Submission> getAllTaskSubmissions(String status, Long userId, Pageable pageable) {
-        if (status != null && userId != null) {
-            return submissionRepository.findAllByStatusAndUserId(status, userId, pageable);
+        SubmissionStatus statusFilter = status != null ? parseStatus(status) : null;
+        if (statusFilter != null && userId != null) {
+            return submissionRepository.findAllByStatusAndUserId(statusFilter, userId, pageable);
         }
-        if (status != null) {
-            return submissionRepository.findAllByStatus(status, pageable);
+        if (statusFilter != null) {
+            return submissionRepository.findAllByStatus(statusFilter, pageable);
         }
         if (userId != null) {
             return submissionRepository.findAllByUserId(userId, pageable);
@@ -65,14 +67,35 @@ public class SubmissionServiceImplementation implements SubmissionService{
     @Override
     public Submission acceptDeclineTaskSubmission(Long submissionId, String status,String jwt) throws Exception {
         Submission submission = getTaskSubmissionById(submissionId);
-        submission.setStatus(status);
-        if(status.equals("ACCEPT")){
+        SubmissionStatus newStatus = parseReviewDecision(status);
+        submission.setStatus(newStatus);
+        if (newStatus == SubmissionStatus.ACCEPTED) {
             taskService.completeTask(submission.getTaskId(),jwt);
             meterRegistry.counter("submissions.accepted").increment();
-        } else if (status.equals("DECLINE")) {
+        } else if (newStatus == SubmissionStatus.DECLINED) {
             meterRegistry.counter("submissions.declined").increment();
         }
         return submissionRepository.save(submission);
 
+    }
+
+    // accepts either the DB enum spelling (ACCEPTED/DECLINED) or the older verb form the
+    // frontend/API clients already send (ACCEPT/DECLINE), case-insensitively
+    private SubmissionStatus parseReviewDecision(String status) {
+        String normalized = status == null ? "" : status.trim().toUpperCase();
+        return switch (normalized) {
+            case "ACCEPT", "ACCEPTED" -> SubmissionStatus.ACCEPTED;
+            case "DECLINE", "DECLINED" -> SubmissionStatus.DECLINED;
+            default -> throw new IllegalArgumentException(
+                    "Invalid status '" + status + "': expected ACCEPT/ACCEPTED or DECLINE/DECLINED");
+        };
+    }
+
+    private SubmissionStatus parseStatus(String status) {
+        try {
+            return SubmissionStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status '" + status + "': expected PENDING, ACCEPTED, or DECLINED");
+        }
     }
 }

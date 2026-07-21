@@ -6,6 +6,7 @@ import com.krishna.modal.UserDto;
 import com.krishna.request.CreateTaskRequest;
 import com.krishna.request.UpdateTaskRequest;
 import com.krishna.response.TaskResponse;
+import com.krishna.security.CurrentUserIdHolder;
 import com.krishna.service.TaskService;
 import com.krishna.service.UserService;
 import io.micrometer.core.annotation.Timed;
@@ -35,6 +36,7 @@ public class TaskController {
             @Valid @RequestBody CreateTaskRequest task,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Task createdTask = taskService.createTask(task, user.getRole());
         return ResponseEntity.created(URI.create("/api/task/" + createdTask.getId()))
                 .body(TaskResponse.from(createdTask));
@@ -55,6 +57,7 @@ public class TaskController {
             @RequestParam (name = "status",required = false) TaskStatus taskStatus,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         List<Task> tasks = taskService.assignedUsersTask(user.getId(), taskStatus);
         return ResponseEntity.ok(tasks.stream().map(TaskResponse::from).toList());
     }
@@ -68,6 +71,7 @@ public class TaskController {
             @RequestHeader("Authorization") String jwt) throws Exception {
         log.info("task status in controller {}", taskStatus);
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Page<TaskResponse> tasks = taskService.getAllTasks(taskStatus, assignedUserId, pageable).map(TaskResponse::from);
         return ResponseEntity.ok(tasks);
     }
@@ -78,6 +82,7 @@ public class TaskController {
             @PathVariable Long userId,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Task task = taskService.assignToUser(userId, id);
         return ResponseEntity.ok(TaskResponse.from(task));
     }
@@ -88,6 +93,7 @@ public class TaskController {
             @Valid @RequestBody UpdateTaskRequest task,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Task updatedTask = taskService.updateTask(id, task, user.getId());
         return ResponseEntity.ok(TaskResponse.from(updatedTask));
     }
@@ -98,6 +104,7 @@ public class TaskController {
             @PathVariable Long id,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         Task task = taskService.completeTask(id);
         return ResponseEntity.ok(TaskResponse.from(task));
     }
@@ -107,6 +114,7 @@ public class TaskController {
             @PathVariable Long id,
             @RequestHeader("Authorization") String jwt) throws Exception {
         UserDto user = userService.getUserProfile(jwt);
+        CurrentUserIdHolder.set(user.getId());
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }

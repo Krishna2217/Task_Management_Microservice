@@ -37,6 +37,11 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return problemDetail(HttpStatus.BAD_REQUEST, "Bad Request", "INVALID_ARGUMENT", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(FeignException.class)
     public ProblemDetail handleFeignException(FeignException ex, HttpServletRequest request) {
         return problemDetail(HttpStatus.BAD_GATEWAY, "Upstream Service Error", "UPSTREAM_SERVICE_ERROR",

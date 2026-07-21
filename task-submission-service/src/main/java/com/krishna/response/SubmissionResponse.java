@@ -24,7 +24,7 @@ public class SubmissionResponse {
                 submission.getTaskId(),
                 submission.getGithubLink(),
                 submission.getUserId(),
-                submission.getStatus(),
+                submission.getStatus() != null ? submission.getStatus().name() : null,
                 submission.getSubmissionTime()
         );
     }

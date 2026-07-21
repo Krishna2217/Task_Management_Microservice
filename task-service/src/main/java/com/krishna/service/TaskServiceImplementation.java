@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,6 @@ public class TaskServiceImplementation implements TaskService {
         task.setTags(request.getTags());
         task.setDeadline(request.getDeadline());
         task.setStatus(TaskStatus.PENDING);
-        task.setCreatedAt(LocalDateTime.now());
         Task saved = taskRepository.save(task);
         // scrapes as "tasks_total" not "tasks_created_total": OpenMetrics reserves the
         // "_created" counter suffix, so Micrometer's Prometheus naming convention strips it
